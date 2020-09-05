@@ -72,6 +72,9 @@ def welcome_user():
     return render_template("welcome_user.html")
 
 @app.route("/chat.html")
-def chat()
+def chat():
     return render_template("chat.html")
 
+
+if __name__ == '__main__':
+    app.run()

@@ -1,0 +1,6 @@
+flask
+flask_sqlalchemy
+flask_session
+flask_socketio
+flask_cors
+sqlalchemy
