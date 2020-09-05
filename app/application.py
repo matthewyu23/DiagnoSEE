@@ -1,69 +1,38 @@
 import os
-import flask
-import Flask, render_template, request, url_for, jsonify
+
+from flask import Flask, session, render_template, request, url_for, jsonify, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from flask_session import Session
+from sqlalchemy import create_engine
+from sqlalchemy.sql import text
+from sqlalchemy.orm import scoped_session, sessionmaker
+from flask_socketio import SocketIO, emit
+import requests
+from json import load, dumps
 
 
-@app.route('/register')
-def register():
-    """
-    Register user.
-    """
-    return
+# sets up environment and db
+app = Flask(__name__)
+# Check for environment variable
+if not os.getenv("DATABASE_URL"):
+    raise RuntimeError("DATABASE_URL is not set")
 
-@app.route("/validate_user", methods=["POST"])
-def val_user():
-    """
-    authentication patient and physician.
-    """
-    return
+# Configure session to use filesystem
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
+socketio = SocketIO(app)
 
-@app.route("/login")
-def login():
-    return
+# Set up database
+engine = create_engine(os.getenv("DATABASE_URL"))
+db = scoped_session(sessionmaker(bind=engine))
 
-@app.route("/login/validate")
-def val_login():
-    return
 
-@app.route('/home')
-def index():
-    """
-    The homepage of the website,
-    render application templates.
-    """
-    return render_template("static/index.html")
-
-@app.route('/patient')
-def patient_home():
-    """
-    The homepage of the patients,
-    render application templates.
-    """
-    return render_template("static/patient.html");
-
-@app.route('/patient/add', methods=['POST'])
-def patient_add():
-    """
-    Interface for patient to add videos.
-    render application and redirect client to page where 
-    they can view their submissions.
-    """ 
-    return
-
-@app.route('/doctor')
-def doctor_home():
-    """
-    The homepage of the physicians,
-    view patient video submissions.
-    """
-    return
-
-"""
 @app.route("/")
 def index():
-    return render_template("welcome.html")
+    return render_template("index.html")
 
 @app.route("/register.html")
 def register():
@@ -76,7 +45,7 @@ def val_user():
     if db.execute("SELECT * FROM users WHERE username = :username", {"username":username}).rowcount == 0:
         db.execute("INSERT INTO users (username, password) VALUES (:username, :password)", {"username":username, "password":password})
         db.commit()
-        return render_template("welcome.html")
+        return render_template("index.html")
     else:
         return render_template("register.html", error_message="This username has been taken. Please try a different one.")
 
@@ -101,4 +70,8 @@ def val_login():
 @app.route("/welcome_user")
 def welcome_user():
     return render_template("welcome_user.html")
-"""
+
+@app.route("/chat.html")
+def chat()
+    return render_template("chat.html")
+

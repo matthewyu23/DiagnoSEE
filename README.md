@@ -16,6 +16,17 @@
 - Needs to be some way that we can actually fix the GAN model
     - Use the close-up image the user has sent and the video time it was commented at
 
+# Visual Layout
+- one page where user can choose between uploading videos and viewing chat
+- one page where user can input/upload the blurry video file
+    - on the same page (although different endpoints), the new clear video will be on the video player and available for download
+    - on the same page (but different endpoints), the user can playback the clear video, pause it where it's innaccurate, and take a close-up picture of what the image should be
+        - user can then send the timestamped video, correct picture, etc., in a message
+- one page for instant messages
+    - users should be able to view videos while in the chat
+    - users should be able to view a full chat history
+    - users should only be able to speak to "friends" like in facebook, ig, etc. otherwise, it's not private
+
 # Frontend endpoints
 - Registration and login function (for both the patient and the physician), saved to database
 - Allow users to submit video file, save file to cloud, store file path to database, return new and rendered video to client-side
