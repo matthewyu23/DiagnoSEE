@@ -69,7 +69,7 @@ def val_login():
     pword = ((db.execute("SELECT password FROM users WHERE username = :username", {"username":uname}).fetchall())[0])[0]
     if password == pword:
         session["username"] = uname
-        return redirect(url_for("welcome_user", _external=True))
+        return redirect(url_for("dashboard", _external=True))
         # return render_template("welcome_user.html")
     return render_template("login.html", error_message="This password is incorrect!")
 
@@ -149,6 +149,11 @@ def upload_image():
             return redirect("/dashboard") 
     else:
         return render_template("upload.html")
+
+
+def increase_res(filename):
+    return filename
+
 
 @app.route('/view_video/<filename>')
 def view_video(filename):
