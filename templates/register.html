@@ -4,8 +4,10 @@
     <head><title>Register!</title></head>
     <body>
         <form action="validate_user" method="post">
+            <input type="text" name="full_name" placeholder="Full Name">
             <input type="text" name="user" placeholder="Username">
             <input type="text" name="password" placeholder="Password">
+            <input type="text" name="user_type" placeholder="Please indicate whether you are a 'Physician' or 'Patient'">
             <button>Submit</button>
         </form>
         {% if error_message %}
