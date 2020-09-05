@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <title>Dashboard</title>
+      <meta charset="utf-8">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Uploaded Videos</h1>
+      <table id="table" data-height="460" class="table table-bordered">
+      <!-- here goes our data! -->
+      </table>
+    </div>
+    <div class="container">
+      <h1><a href="upload.html">Upload a new video</a></h1>
+      Click on the link above to upload a new video!
+    </div>
+    <script>
+      let videos_table = [
+        { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4"},
+        { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4"}
+      ];
+
+      let headers = ["Date", "Video #", "Physician", "Video title", "Link"]
+      //var videos_table = {{videos_array}}
+
+      function generateTableHead(table, data) {
+        let thead = table.createTHead();
+        let row = thead.insertRow();
+        for (let key of data) {
+          let th = document.createElement("th");
+          let text = document.createTextNode(key);
+          th.appendChild(text);
+          row.appendChild(th);
+        }
+      }
+
+      function generateTable(table, data) {
+        for (let element of data) {
+          let row = table.insertRow();
+          for (key in element) {
+            let cell = row.insertCell();
+            if (key == "video_link"){
+              var elLink = document.createElement('a');
+              elLink.href = element[key];
+              elLink.innerHTML = 'link';
+              cell.appendChild(elLink);
+            }
+            else{
+            let text = document.createTextNode(element[key]);
+            cell.appendChild(text);
+          }
+          }
+        }
+      }
+
+      let table = document.querySelector("table");
+      generateTable(table, videos_table);
+      generateTableHead(table, headers);
+    </script>
+
+  </body>
+</html>
