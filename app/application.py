@@ -10,6 +10,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from flask_socketio import SocketIO, emit
 import requests
 from json import load, dumps
+from werkzeug.utils import secure_filename
 
 
 # sets up environment and db
@@ -96,6 +97,42 @@ def in_channel(channel_name):
     print("I am sending you to a channel")
     msgs = msg[channel_name]
     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
+
+app.config['ALLOWED_EXTENSIONS'] = ['mp4']
+app.config['UPLOAD_FOLDER'] = 'nets/'
+def allowed_files(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_image():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part.')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if not allowed_files(file.filename):
+            flash('File type not supported! Please upload a file with extension ' + ','.join(app.config['ALLOWED_EXTENSIONS']))
+            return render_template("upload.html")
+        if file and allowed_files(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            # adding video into the database for later
+            # i = Image(filename=filename)
+            # db.session.add(i)
+            # call function that runs the neural network
+            # redirect the user to the result of the network
+            return redirect(url_for('view_video',
+                                        filename=filename))
+    else:
+        return render_template("upload.html")
+
+@app.route('/view_video/<filename>')
+def view_video(filename):
+    return render_template("view_video.html")
 
 @socketio.on("submit message")
 def message(data):
