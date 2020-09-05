@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>View video</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+  </head>
+  <body>
+    <div style="text-align:center">
+      <!-- embed video with default controls + Download option-->
+      <video id="patient_video" width="420" controls>
+        <source src="sample_video.mp4" type="video/mp4">
+        Your browser does not support HTML video.
+      </video>
+      <a href="sample_video.mp4" download>Download</a>
+
+      <!-- display current time in the video -->
+      <button onclick="displayTime()" type="button">Get Time</button>
+      <p id="video_time"></p>
+
+      <!-- textbox to set video at a particular time the user enters -->
+      <form id="form_time" method="POST" onsubmit="setTime()">
+        <input type="number" step="any" id="input_time" name="input_time"><br>
+        <input type="submit" value="Set time">
+      </form>
+
+    </div>
+
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>
+  var vid = document.getElementById("patient_video");
+
+  function displayTime() {
+    document.getElementById("video_time").innerHTML = "Current time: " + vid.currentTime.toFixed(3);
+  }
+
+  function setTime() {
+    var input_time = document.getElementById('input_time').value
+    vid.currentTime = input_time
+  }
+
+  function setTimeTest() {
+    vid.currentTime = 5
+  }
+
+  var frm = $('#form_time');
+      frm.submit(function (ev) {
+          $.ajax({
+              type: frm.attr('method'),
+              url: frm.attr('action'),
+              data: frm.serialize(),
+              success: function (data) {
+              }
+          });
+
+          ev.preventDefault();
+      });
+
+  </script>
+
+  </body>
+</html>

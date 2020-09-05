@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+<html>
+    <body>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+        <script type="text/javascript">
+            document.addEventListener('DOMContentLoaded', function() {
+                var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+                socket.on('connect', function() {
+                    document.querySelector('#message').onsubmit = function(event) {
+                        event.preventDefault();
+                        var chan_name = document.querySelector('#channelname').innerHTML;
+                        localStorage.setItem('channel', chan_name);
+                        console.log('creating message');
+                        const message = document.querySelector('#new_message').value;
+                        const username = localStorage.getItem('user');
+                        const channel = localStorage.getItem('channel');
+                        console.log('sending to server side');
+                        socket.emit('submit message', {'channel': channel, 'username': username, 'message': message});
+                    }
+                });
+
+                socket.on('announce message', function(data) {
+                    console.log('at annouce message');
+                    const p = document.createElement('p');
+                    p.innerHTML = `${data.username}: ${data.message} ${data.timestamp}`;
+                    document.querySelector('#messages').append(p);
+                    console.log("SOCKET IO WORKKSSSSSIUFERIUIRUEHIURG");
+                });
+
+                document.querySelector("#go_back").addEventListener('click', function() {
+                    localStorage.setItem('channel', 'main_page');
+                    window.location.replace('/');
+                });
+            });
+
+
+        </script>
+        <h3 id= "channelname">{{channel_name}}</h3>
+        <button id = "go_back"><a href = "/">Back to Channels List</a></button>
+        <div id = "messages">
+        {% for message in msgs %}
+            <p>{{message[0]}}: {{message[1]}} {{message[2]}}</p>
+        {% endfor %}
+        </div>
+        <form id="message">
+            <input id="new_message" autocomplete="off" placeholder="Text Message" type="text">
+            <button>Submit</button>
+        </form>
+    </body>
+</html>
