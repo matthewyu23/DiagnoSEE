@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>View video</title>
+    <title>Videos Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
@@ -9,11 +9,13 @@
   <body>
     <div style="text-align:center">
       <!-- embed video with default controls + Download option-->
-      <video id="patient_video" width="420" controls>
-        <source src="sample_video.mp4" type="video/mp4">
+      {% for video in videos %}
+      <video id="{{ video.id }}" width="420" controls>
+        <source src="{{ video.filepath_new }}" type="video/mp4">
         Your browser does not support HTML video.
       </video>
-      <a href="sample_video.mp4" download>Download</a>
+      <a href="{{ video.filepath_new }}" download>Download</a>
+      {% endfor %}
 
       <!-- display current time in the video -->
       <button onclick="displayTime()" type="button">Get Time</button>
@@ -24,7 +26,6 @@
         <input type="number" step="any" id="input_time" name="input_time"><br>
         <input type="submit" value="Set time">
       </form>
-
     </div>
 
 

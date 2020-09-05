@@ -71,7 +71,17 @@ def val_login():
 
 @app.route("/welcome_user")
 def welcome_user():
-    return render_template("welcome_user.html")
+    username = session["username"]
+    user_info = db.execute("SELECT * FROM users WHERE username = :username",
+                           {"username", username}).fetchone()
+    is_patient = user_info['is_patient']
+    if is_patient:
+        videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
+                            {"user_id": user_info['user_id']}).fetchall()
+    else:
+        videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
+                            {"user_id": user_info['user_id']}).fetchall()
+    return render_template("view_video.html", user_info=user_info, videos=videos)
 
 @app.route("/chat.html")
 def chat():
