@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session, render_template, request, url_for, jsonify, redirect
+from flask import Flask, session, render_template, request, url_for, jsonify, redirect, flash
 # from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_session import Session
