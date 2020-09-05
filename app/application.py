@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, session, render_template, request, url_for, jsonify, redirect
+from flask import Flask, session, render_template, request, url_for, jsonify, redirect, flash
 # from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_session import Session
@@ -10,6 +10,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 from flask_socketio import SocketIO, emit
 import requests
 from json import load, dumps
+from werkzeug.utils import secure_filename
 
 
 # sets up environment and db
@@ -40,12 +41,12 @@ def register():
 
 @app.route("/validate_user", methods=["POST"])
 def val_user():
+    full_name = request.form.get("full_name")
     username = request.form.get("user")
     password = request.form.get("password")
-    full_name = request.form.get("full_name")
-    user_type = request.form.get("user_type")
+    is_patient = request.form.get("user_type")
     if db.execute("SELECT * FROM users WHERE username = :username", {"username":username}).rowcount == 0:
-        db.execute("INSERT INTO users (full_name, username, password, user_type) VALUES (:full_name, :username, :password, :user_type)", {"username":username, "password":password})
+        db.execute("INSERT INTO users (full_name, username, password, is_patient) VALUES (:full_name, :username, :password, :is_patient)", {"full_name":full_name, "username":username, "password":password, "is_patient":is_patient})
         db.commit()
         return render_template("index.html")
     else:
@@ -112,6 +113,42 @@ def in_channel(channel_name):
     print("I am sending you to a channel")
     msgs = msg[channel_name]
     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
+
+app.config['ALLOWED_EXTENSIONS'] = ['mp4']
+app.config['UPLOAD_FOLDER'] = 'nets/'
+def allowed_files(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_image():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part.')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if not allowed_files(file.filename):
+            flash('File type not supported! Please upload a file with extension ' + ','.join(app.config['ALLOWED_EXTENSIONS']))
+            return render_template("upload.html")
+        if file and allowed_files(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            # adding video into the database for later
+            # i = Image(filename=filename)
+            # db.session.add(i)
+            # call function that runs the neural network
+            # redirect the user to the result of the network
+            return redirect(url_for('view_video',
+                                        filename=filename))
+    else:
+        return render_template("upload.html")
+
+@app.route('/view_video/<filename>')
+def view_video(filename):
+    return render_template("view_video.html")
 
 @socketio.on("submit message")
 def message(data):
