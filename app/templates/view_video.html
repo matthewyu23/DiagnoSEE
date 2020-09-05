@@ -7,16 +7,14 @@
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
   </head>
   <body>
-    <h1>Welcome, {{ user_info.fullname }}!</h1>
+    <h1>View Video</h1>
     <div style="text-align:center">
       <!-- embed video with default controls + Download option-->
-      {% for video in videos %}
-      <video id="{{ video.id }}" width="420" controls>
-        <source src="{{ video.filepath_new }}" type="video/mp4">
+      <video id="" width="420" controls>
+        <source src="" type="video/mp4">
         Your browser does not support HTML video.
       </video>
-      <a href="{{ video.filepath_new }}" download>Download</a>
-      {% endfor %}
+      <a href="" download>Download</a>
 
       <!-- display current time in the video -->
       <button onclick="displayTime()" type="button">Get Time</button>

@@ -70,26 +70,22 @@ def val_login():
         # return render_template("welcome_user.html")
     return render_template("login.html", error_message="This password is incorrect!")
 
-@app.route("/welcome_user")
-def welcome_user():
-    try:
-        username = session["username"]
-        user_info = db.execute("SELECT * FROM users WHERE username = :username",
-                             {"username", username}).fetchone()
-        is_patient = user_info['is_patient']
-        if is_patient:
-            videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
-                                {"user_id": user_info['user_id']}).fetchall()
-        else:
-            videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
-                                {"user_id": user_info['user_id']}).fetchall()
-        return render_template("view_video.html", user_info=user_info, videos=videos)
-    except:
-        return '''
-                <html>
-                    <h1>You did not login!</h1>
-                </html>
-                '''
+@app.route("/dashboard")
+def dashboard():
+
+    username = session["username"]
+    user_info = db.execute("SELECT * FROM users WHERE username = :username",
+                        {"username": username}).fetchone()
+    print(user_info)
+    is_patient = user_info['is_patient']
+    if is_patient:
+        videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
+                            {"user_id": user_info['user_id']}).fetchall()
+    else:
+        videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
+                            {"user_id": user_info['user_id']}).fetchall()
+    return render_template("dashboard.html", user_info=user_info, videos=videos)
+    
 @app.route("/chat.html")
 def chat():
     return render_template("chat.html")
