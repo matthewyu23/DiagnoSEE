@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, session, render_template, request, url_for, jsonify, redirect
-from flask_sqlalchemy import SQLAlchemy
+# from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_session import Session
 from sqlalchemy import create_engine
@@ -24,6 +24,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 socketio = SocketIO(app)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Set up database
 engine = create_engine(os.getenv("DATABASE_URL"))
