@@ -1,7 +1,7 @@
 import os
-
+import asyncio
+import threading
 from flask import Flask, session, render_template, request, url_for, jsonify, redirect, flash
-# from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_session import Session
 from sqlalchemy import create_engine
@@ -11,6 +11,7 @@ from flask_socketio import SocketIO, emit
 import requests
 from json import load, dumps
 from werkzeug.utils import secure_filename
+from datetime import datetime
 
 
 # sets up environment and db
@@ -26,6 +27,8 @@ Session(app)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 socketio = SocketIO(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['ALLOWED_EXTENSIONS'] = ['mp4', 'mov']
+app.config['UPLOAD_FOLDER'] = 'media/'
 
 # Set up database
 engine = create_engine(os.getenv("DATABASE_URL"))
@@ -110,14 +113,16 @@ def in_channel(channel_name):
     msgs = msg[channel_name]
     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
 
-app.config['ALLOWED_EXTENSIONS'] = ['mp4']
-app.config['UPLOAD_FOLDER'] = 'nets/'
-def allowed_files(filename):
+
+async def allowed_files(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_image():
+    username = session['username']
+    user_info = db.execute("SELECT * FROM users WHERE username = :username",
+                        {"username": username}).fetchone() 
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part.')
@@ -131,14 +136,17 @@ def upload_image():
             return render_template("upload.html")
         if file and allowed_files(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            save_directory = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(save_directory)
             # adding video into the database for later
-            # i = Image(filename=filename)
-            # db.session.add(i)
-            # call function that runs the neural network
-            # redirect the user to the result of the network
-            return redirect(url_for('view_video',
-                                        filename=filename))
+            db.execute("INSERT INTO videos (patient_id, filepath_old, physician_id, date)" + 
+                        " VALUES (:patient_id, :filepath_old, :physician_id, :date)",
+                        {"patient_id": user_info[0], "filepath_old": save_directory, 
+                         "physician_id": request.args['physician_id'], 
+                         "date": datetime.now().strftime('%Y-%m-%d')})
+            process_video = threading.Thread(target=increase_res, 
+                                             args=(save_directory,), daemon=True)
+            return redirect("/dashboard") 
     else:
         return render_template("upload.html")
 
