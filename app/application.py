@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask, session, render_template, request, url_for, jsonify, redirect
-from flask_sqlalchemy import SQLAlchemy
+# from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_session import Session
 from sqlalchemy import create_engine
@@ -39,12 +39,12 @@ def register():
 
 @app.route("/validate_user", methods=["POST"])
 def val_user():
+    full_name = request.form.get("full_name")
     username = request.form.get("user")
     password = request.form.get("password")
-    full_name = request.form.get("full_name")
-    user_type = request.form.get("user_type")
+    is_patient = request.form.get("user_type")
     if db.execute("SELECT * FROM users WHERE username = :username", {"username":username}).rowcount == 0:
-        db.execute("INSERT INTO users (full_name, username, password, user_type) VALUES (:full_name, :username, :password, :user_type)", {"username":username, "password":password})
+        db.execute("INSERT INTO users (full_name, username, password, is_patient) VALUES (:full_name, :username, :password, :is_patient)", {"full_name":full_name, "username":username, "password":password, "is_patient":is_patient})
         db.commit()
         return render_template("index.html")
     else:
