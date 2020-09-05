@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+
+<html>
+    <head><title>Register!</title></head>
+    <body>
+        <form action="validate_user" method="post">
+            <input type="text" name="user" placeholder="Username">
+            <input type="text" name="password" placeholder="Password">
+            <button>Submit</button>
+        </form>
+        {% if error_message %}
+            <p style="color:red;">{{error_message}}</p>
+        {% endif %}
+    </body>
+</html>
