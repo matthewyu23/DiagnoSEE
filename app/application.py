@@ -82,18 +82,18 @@ def dashboard():
     user_info = db.execute("SELECT * FROM users WHERE username = :username",
                         {"username": username}).fetchone()
     print(user_info)
-    is_patient = user_info['is_patient']
+    is_patient = user_info[4]
     if is_patient:
         videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
-                            {"user_id": user_info['user_id']}).fetchall()
+                            {"user_id": user_info[0]}).fetchall()
     else:
         videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
-                            {"user_id": user_info['user_id']}).fetchall()
+                            {"user_id": user_info[0]}).fetchall()
     return render_template("dashboard.html", user_info=user_info, videos=videos)
 
-@app.route("/chat.html")
-def chat():
-    return render_template("chat.html")
+# @app.route("/chat.html")
+# def chat():
+#     return render_template("chat.html")
 
 @app.route("/channels", methods=["POST"])
 def channels():
@@ -167,26 +167,26 @@ def view_video(filename):
 def chat():
     return render_template("chat.html")
 
-@app.route("/channels", methods=["POST"])
-def channels():
-    print("in channels")
-    channel = request.form.get("chan")
-    msg[channel] = []
-    if channel not in channels_list:
-        channels_list.append(channel)
-        return jsonify({"error":False, "new_channel":channel})
-    else:
-        return jsonify({"error":True})
+# @app.route("/channels", methods=["POST"])
+# def channels():
+#     print("in channels")
+#     channel = request.form.get("chan")
+#     msg[channel] = []
+#     if channel not in channels_list:
+#         channels_list.append(channel)
+#         return jsonify({"error":False, "new_channel":channel})
+#     else:
+#         return jsonify({"error":True})
 
-@app.route("/populate_channels")
-def populate_channels():
-    return jsonify({"chans": dumps(channels_list)})
+# @app.route("/populate_channels")
+# def populate_channels():
+#     return jsonify({"chans": dumps(channels_list)})
 
-@app.route("/<string:channel_name>.html")
-def in_channel(channel_name):
-    print("I am sending you to a channel")
-    msgs = msg[channel_name]
-    return render_template("channel.html", msgs=msgs, channel_name=channel_name)
+# @app.route("/<string:channel_name>.html")
+# def in_channel(channel_name):
+#     print("I am sending you to a channel")
+#     msgs = msg[channel_name]
+#     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
 
 @socketio.on("submit message")
 def message(data):
