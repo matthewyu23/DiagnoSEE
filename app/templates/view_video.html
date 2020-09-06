@@ -32,6 +32,12 @@
         video {
           border-radius: 10px;
         }
+
+        #messages {
+          height: 400px;
+          overflow-y: scroll;
+          margin-bottom: 50px;
+        }
       </style>
   </head>
   <body>
@@ -117,20 +123,21 @@
           <button id="sync_new" type="button" onclick="syncNew()">Sync</button>
         </div>
       </div>
+      <h2>Comments</h2>
+      <form id="message">
+          <input id="new_message" autocomplete="off" placeholder="Text Message" type="text">
+          <button>Submit</button>
+      </form>
+      <div id = "messages">
+        {% if msgs %}
+        {% for message in msgs %}
+            <p>{{message[0]}}: {{message[1]}} {{message[2]}}</p>
+        {% endfor %}
+        {% endif %}
+      </div>
 
     </div>
 
-    <form id="message">
-        <input id="new_message" autocomplete="off" placeholder="Text Message" type="text">
-        <button>Submit</button>
-    </form>
-    <div id = "messages">
-      {% if msgs %}
-      {% for message in msgs %}
-          <p>{{message[0]}}: {{message[1]}} {{message[2]}}</p>
-      {% endfor %}
-      {% endif %}
-    </div>
 
     <script>
       // display current video time
