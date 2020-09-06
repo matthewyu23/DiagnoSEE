@@ -89,6 +89,7 @@ def dashboard():
     else:
         videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
                             {"user_id": user_info[0]}).fetchall()
+    print(videos)
     return render_template("dashboard.html", user_info=user_info, videos=videos)
 
 # @app.route("/chat.html")
@@ -130,25 +131,30 @@ def upload_video():
             flash('No file part.')
             return redirect(request.url)
         file = request.files['file']
+
         if file.filename == '':
             flash('No selected file')
             return redirect(request.url)
+
         if not allowed_files(file.filename):
             flash('File type not supported! Please upload a file with extension ' + ','.join(app.config['ALLOWED_EXTENSIONS']))
             return render_template("upload.html")
+
         if file and allowed_files(file.filename):
             filename = secure_filename(file.filename)
             save_directory = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(save_directory)
             # adding video into the database for later
-            db.execute("INSERT INTO videos (patient_id, filepath_old, physician_id, date)" +
-                        " VALUES (:patient_id, :filepath_old, :physician_id, :date)",
+            print(request.form['selected_physician'])
+            db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status)" +
+                        " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status)",
                         {"patient_id": user_info[0], "filepath_old": save_directory,
-                         "physician_id": request.args['physician_id'],
-                         "date": datetime.now().strftime('%Y-%m-%d')})
-            process_video = threading.Thread(target=increase_res,
-                                             args=(save_directory,), daemon=True)
-            return redirect(url_for("/dashboard"))
+                         "filepath_new": 'high_res_' + save_directory, "physician_id": request.form['selected_physician'],
+                         "date": datetime.now().strftime('%Y-%m-%d'), "status": "processing"})
+            db.commit()
+            #process_video = threading.Thread(target=increase_res,
+            #                                 args=(save_directory,), daemon=True)
+            return redirect(url_for("dashboard"))
     else:
         all_physicians = db.execute("SELECT user_id FROM users WHERE is_patient = :physician",
                                     {"physician": False}).fetchall()
