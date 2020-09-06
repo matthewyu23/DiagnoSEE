@@ -105,7 +105,7 @@ def channels():
 
 @app.route("/populate_channels")
 def populate_channels():
-    return jsonify({"chans":json.dumps(channels_list)})
+    return jsonify({"chans": dumps(channels_list)})
 
 @app.route("/<string:channel_name>.html")
 def in_channel(channel_name):

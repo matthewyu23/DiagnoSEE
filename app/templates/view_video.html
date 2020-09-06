@@ -1,51 +1,134 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Videos Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+      <title>View video</title>
+      <meta charset="utf-8">
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
   </head>
   <body>
-    <h1>View Video</h1>
-    <div style="text-align:center">
-      <!-- embed video with default controls + Download option-->
-      <video id="" width="420" controls>
-        <source src="" type="video/mp4">
-        Your browser does not support HTML video.
-      </video>
-      <a href="" download>Download</a>
+    <div class="container" style="text-align:center">
+      <h1>View Video</h1>
+      <!-- instructions -->
+      <h3 style="text-align:left">Tips</h3>
+      <ul style="text-align:left">
+        <li>Use "Get time" to show the timestamp of the current video frame -- you can reference this value to inform your physician about issues at a particular frame.</li>
+        <li>Use "Sync" to set both videos to the same timestamp</li>
+        <li>Use "Set time" to set the video at a particular timestamp</li>
+        <li>Use "Play both" or "Pause both" to control both videos together</li>
+      </ul>
+      <!-- control both videos simultaneously -->
+      <button id="play_both" type="button" onclick="playBoth()">Play both</button>
+      <button id="pause_both" type="button" onclick="pauseBoth()">Pause both</button>
+    </div>
+    <div class="container" style="text-align:center">
+      <div class="row">
+        <!-- original video -->
+        <div class="col-sm-6">
+          <!-- embed video with default controls + Download option-->
+          <label>Original video</label>&nbsp<a href="" download>(Download)</a><br>
+          <video id="video_old" width="100%" controls>
+            <source src="sample_video.mp4" type="video/mp4">
+            Your browser does not support HTML video.
+          </video><br>
+          <!-- display current time in the video -->
+          <button id="button_get_time_old" type="button">Get time</button>
+          <p id="video_old_time"></p>
+          <!-- textbox to set video at a particular time the user enters -->
+          <form id="form_time_old" method="POST" onsubmit="setTimeOld()">
+            <input type="number" step="any" id="input_time_old"><br>
+            <input type="submit" value="Set time">
+          </form>
+          <!-- sync the current video to the other video -->
+          <button id="sync_old" type="button" onclick="syncOld()">Sync</button>
+        </div>
+        <!-- new highres video -->
+        <div class="col-sm-6">
+          <!-- embed video with default controls + Download option-->
+          <label>High-resolution video</label>&nbsp<a href="" download>(Download)</a><br>
+          <video id="video_new" width="100%" controls>
+            <source src="sample_video.mp4" type="video/mp4">
+            Your browser does not support HTML video.
+          </video><br>
+          <!-- display current time in the video -->
+          <button id="button_get_time_new" type="button">Get time</button>
+          <p id="video_new_time"></p>
+          <!-- textbox to set video at a particular time the user enters -->
+          <form id="form_time_new" id="form_time" method="POST" onsubmit="setTimeNew()">
+            <input type="number" step="any" id="input_time_new"><br>
+            <input type="submit" value="Set time">
+          </form>
+          <!-- sync the current video to the other video -->
+          <button id="sync_new" type="button" onclick="syncNew()">Sync</button>
+        </div>
+      </div>
 
-      <!-- display current time in the video -->
-      <button onclick="displayTime()" type="button">Get Time</button>
-      <p id="video_time"></p>
-
-      <!-- textbox to set video at a particular time the user enters -->
-      <form id="form_time" method="POST" onsubmit="setTime()">
-        <input type="number" step="any" id="input_time" name="input_time"><br>
-        <input type="submit" value="Set time">
+      <!-- add notes & select physician -->
+      <form id="notes" method="POST">
+        <br><label for="notes_text">Enter any notes (e.g. if you want to elaborate on a particular frame):</label><br>
+        <textarea id="notes_text" cols="50" rows="10"></textarea><br>
+        <label for="selected_physician">Select your physician:</label><br>
+        <select id="selected_physician">
+          {% for physician in physicians %}
+            <option value={{physician}}>{{physician}}</option>
+          {% endfor %}
+        </select><br><br>
+        <input type="submit" value="Submit videos to my physician">
       </form>
+
     </div>
 
+    <script>
+      // display current video time
+      function displayTime(video_name) {
+        var vid = document.getElementById(video_name);
+        document.getElementById(video_name + "_time").innerHTML = "Current time: " + vid.currentTime.toFixed(3);
+      }
+      document.getElementById("button_get_time_old").addEventListener("click", function() {
+            displayTime("video_old");
+        }, false);
+      document.getElementById("button_get_time_new").addEventListener("click", function() {
+            displayTime("video_new");
+        }, false);
 
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script>
-  var vid = document.getElementById("patient_video");
+      // set video to input time
+      function setTime(video_name, input_time) {
+        var vid = document.getElementById(video_name);
+        vid.currentTime = input_time;
+      }
+      function setTimeOld() {
+        setTime("video_old", document.getElementById('input_time_old').value);
+      }
+      function setTimeNew() {
+        setTime("video_new", document.getElementById('input_time_new').value);
+      }
 
-  function displayTime() {
-    document.getElementById("video_time").innerHTML = "Current time: " + vid.currentTime.toFixed(3);
-  }
+      // sync one video with the other
+      function sync(vid_ref, vid_change){
+        vid_ref = document.getElementById(vid_ref);
+        vid_change = document.getElementById(vid_change);
+        vid_change.currentTime = vid_ref.currentTime;
+      }
+      function syncOld() {
+        sync('video_new', 'video_old');
+      }
+      function syncNew() {
+        sync('video_old', 'video_new');
+      }
 
-  function setTime() {
-    var input_time = document.getElementById('input_time').value
-    vid.currentTime = input_time
-  }
+      // play/pause both videos together
+      function playBoth() {
+        document.getElementById('video_old').play();
+        document.getElementById('video_new').play();
+      }
+      function pauseBoth() {
+        document.getElementById('video_old').pause();
+        document.getElementById('video_new').pause();
+      }
 
-  function setTimeTest() {
-    vid.currentTime = 5
-  }
-
-  var frm = $('#form_time');
+      // prevent page refresh when user submits form to set video time
+      var frm = $('#form_time_old');
       frm.submit(function (ev) {
           $.ajax({
               type: frm.attr('method'),
@@ -54,11 +137,21 @@
               success: function (data) {
               }
           });
-
+          ev.preventDefault();
+      });
+      var frm = $('#form_time_new');
+      frm.submit(function (ev) {
+          $.ajax({
+              type: frm.attr('method'),
+              url: frm.attr('action'),
+              data: frm.serialize(),
+              success: function (data) {
+              }
+          });
           ev.preventDefault();
       });
 
-  </script>
+    </script>
 
   </body>
 </html>
