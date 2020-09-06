@@ -154,23 +154,19 @@ def upload_video():
             save_directory = str(Path(f'video{video_id}') / filename)
             file.save(Path(app.config['UPLOAD_FOLDER']) / save_directory)
             # adding video into the database for later
-<<<<<<< HEAD
-            db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status)" +
-                        " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status)",
-=======
             print(request.form['selected_physician'])
             db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status, name)" +
                         " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status, :name)",
->>>>>>> 11c457bdb85a6b9e933400e11c237ec738ea92a7
                         {"patient_id": user_info[0], "filepath_old": save_directory,
                          "filepath_new": str(Path(f'video{video_id}') / ('high_res' + filename)),
                          "physician_id": request.form['selected_physician'],
                          "date": datetime.now().strftime('%Y-%m-%d'), "status": "processing",
                          "name": request.form['title']})
             db.commit()
-            increase_res(str(Path(app.config['UPLOAD_FOLDER']) / save_directory), f'video{video_id}', 'high_res' + filename, video_id)
-            # process_video = threading.Thread(target=increase_res,
-            #                                  args=(filename, f'video{video_id}', 'high_res' + filename), daemon=True)
+            # increase_res(str(Path(app.config['UPLOAD_FOLDER']) / save_directory), f'video{video_id}', 'high_res' + filename, video_id)
+            process_video = threading.Thread(target=increase_res,
+                                             args=(str(Path(app.config['UPLOAD_FOLDER']) / save_directory), f'video{video_id}', 'high_res' + filename, video_id), daemon=True)
+            process_video.start()
             return redirect(url_for("dashboard"))
     else:
         all_physicians = db.execute("SELECT user_id FROM users WHERE is_patient = :physician",
