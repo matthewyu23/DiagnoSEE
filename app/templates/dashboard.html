@@ -8,32 +8,55 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.js"></script>
+      <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
   </head>
   <body>
     <h1 id="username_hidden" hidden>{{username}}!!</h1>
     <div class="container">
-      <h1>Uploaded Videos</h1>
-      <table id="table" class="">
-        {% for video in videos %}
+      <h1>Dashboard</h1>
+    </div>
+
+    <div class="container">
+      <h2>Uploaded Videos</h2>
+      <table id="table">
+        <thead>
           <tr>
-           <th>{{ video[6].strftime('%m/%d/%Y') }}</th>
-           <th>#{{ video[0] }}</th>
-           {% if user_info[4] %}
-           <th>{{ video[5] }}</th>
-           {% else %}
-           <th>{{ video[1] }}</th>
-           {% endif %}
-           <th>{{ video[7] }}</th>
-           <th>{{ video[3] }}</th>
-           <th>{{ video[8] }}</th>
+            <th>Date</th>
+            <th>No.</th>
+            <th>Title</th>
+            {% if user_info[4] %}
+            <th>Physician</th>
+            {% else %}
+            <th>Patient</th>
+            {% endif %}
+            <th>Link</th>
+            <th>Status</th>
           </tr>
-        {% endfor %}
+        </thead>
+        <tbody>
+          {% for video in videos %}
+            <tr>
+             <td>{{ video[6].strftime('%m/%d/%Y') }}</td>
+             <td>#{{ video[0] }}</td>
+             <td>{{ video[7] }}</td>
+             {% if user_info[4] %}
+             <td>{{ video[5] }}</td>
+             {% else %}
+             <td>{{ video[1] }}</td>
+             {% endif %}
+             <td><a href={{ video[3] }}>click here</a></td>
+             <td>{{ video[8] }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
 
+    <!-- if user is patient, show link to upload video -->
     {% if user_info[4]%}
     <div class="container">
-      <h1><a href={{ url_for('upload_video') }}>Upload a new video</a></h1>
+      <h3><a href={{ url_for('upload_video') }}>Upload a new video</a></h3>
     </div>
     {% endif %}
 
@@ -76,10 +99,13 @@
           }
         }
       }
+    <!-- logout button -->
+    <br><br><div class="container">
+      <button id="logout" type="button" onclick="location.href='/'">Log out</button>
+    </div>
 
-      let table = document.querySelector("table");
-      generateTable(table, videos_table);
-      generateTableHead(table, headers);
+    <script>
+      $(document).ready(function () { $('#table').DataTable(); });
     </script>
 
   </body>
