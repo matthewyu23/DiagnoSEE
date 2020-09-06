@@ -180,16 +180,12 @@ def gan_test():
     process.daemon = True
     process.start()
 
-    return "Processing..."
-
-@app.route('/view_video/<string:new_filename>')
-def view_video(new_filename):
-    video_title = db.execute("SELECT video_name FROM videos WHERE new_filename = :new_filename", {"new_filename":new_filename}).fetchone()
-    return render_template("view_video.html", filename=new_filename, video_title=video_title)
-
-@app.route("/chat.html")
-def chat():
-    return render_template("chat.html")
+@app.route('/view_video/<string:directory>/<string:filename>')
+def view_video(directory, filename):
+    video_title = db.execute("SELECT name FROM videos WHERE filepath_new = :new_filename", 
+                            {"new_filename":str(Path(directory) / filename)}).fetchone()
+    return render_template("view_video.html", filename=str(Path(directory) / filename), 
+                            video_title=video_title)
 
 # @app.route("/channels", methods=["POST"])
 # def channels():

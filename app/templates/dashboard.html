@@ -47,7 +47,9 @@
              {% endif %}
              <td>{{ video[8] }}</td>
              {% if video[8] == "finished" %}
-              <td><a href="view_video/{{ video[3] }}">click here</a></td>
+             <td><a href = "/{{ video[3] }}">click here</a></td>
+             <td><a href={{ url_for('view_video', directory=video[3].split('/')[0], filename=video[3].split('/')[1])  }}>Please work!</a></td>
+            
              {% endif %}
 
             </tr>
