@@ -13,11 +13,11 @@
     <div class="container">
       <h1>Uploaded Videos</h1>
       <table id="table" class="">
-      <!-- here goes our data! -->
+      <!-- table data! -->
       </table>
     </div>
+
     <div class="container">
-      <h1><a href={{ url_for('upload_video') }}>Upload a new video</a></h1>
       <table>
         {% for video in videos %}
           <th>{{ video[6] }}</th>
@@ -27,6 +27,13 @@
         {% endfor %}
       </table>
     </div>
+
+    {% if user_info[4]%}
+    <div class="container">
+      <h1><a href={{ url_for('upload_video') }}>Upload a new video</a></h1>
+    </div>
+    {% endif %}
+
     <script>
       let videos_table = [
         { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4"},

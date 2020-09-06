@@ -145,11 +145,7 @@ def upload_video():
                          "date": datetime.now().strftime('%Y-%m-%d')})
             process_video = threading.Thread(target=increase_res,
                                              args=(save_directory,), daemon=True)
-<<<<<<< HEAD
-            return redirect(url_for("/dashboard")) 
-=======
-            return redirect("/dashboard")
->>>>>>> f7ef18e33375926d7b21f89c1a1fe71cb6b48fbe
+            return redirect(url_for("/dashboard"))
     else:
         all_physicians = db.execute("SELECT user_id FROM users WHERE is_patient = :physician",
                                     {"physician": False}).fetchall()
