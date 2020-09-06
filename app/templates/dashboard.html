@@ -12,13 +12,20 @@
   <body>
     <div class="container">
       <h1>Uploaded Videos</h1>
-      <table id="table" data-height="460" class="table table-bordered">
+      <table id="table" class="">
       <!-- here goes our data! -->
       </table>
     </div>
     <div class="container">
       <h1><a href="upload.html">Upload a new video</a></h1>
-      Click on the link above to upload a new video!
+      <table>
+        {% for video in videos %}
+          <th>{{ video.date }}</th>
+          <th>{{ video.id }}</th>
+          <th>{{ video.title }}</th>
+          <th>{{ video.filepath_new }}</th>
+        {% endfor %}
+      </table>
     </div>
     <script>
       let videos_table = [

@@ -1,7 +1,7 @@
 import os
-
-from flask import Flask, session, render_template, request, url_for, jsonify, redirect
-# from flask_sqlalchemy import SQLAlchemy
+import asyncio
+import threading
+from flask import Flask, session, render_template, request, url_for, jsonify, redirect, flash
 from flask_cors import CORS
 from flask_session import Session
 from sqlalchemy import create_engine
@@ -9,7 +9,8 @@ from sqlalchemy.sql import text
 from sqlalchemy.orm import scoped_session, sessionmaker
 from flask_socketio import SocketIO, emit
 import requests
-import simplejson as json
+from json import load, dumps
+from werkzeug.utils import secure_filename
 from datetime import datetime
 
 
@@ -26,6 +27,8 @@ Session(app)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 socketio = SocketIO(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['ALLOWED_EXTENSIONS'] = ['mp4', 'mov']
+app.config['UPLOAD_FOLDER'] = 'media/'
 
 # Set up database
 engine = create_engine(os.getenv("DATABASE_URL"))
@@ -66,16 +69,73 @@ def val_login():
     pword = ((db.execute("SELECT password FROM users WHERE username = :username", {"username":uname}).fetchall())[0])[0]
     if password == pword:
         session["username"] = uname
-        return redirect(url_for("welcome_user", _external=True))
+        return redirect(url_for("dashboard", _external=True))
         # return render_template("welcome_user.html")
     return render_template("login.html", error_message="This password is incorrect!")
 
-@app.route("/welcome_user")
-def welcome_user():
-    return render_template("welcome_user.html")
-
 channels_list = list()
 msg = dict()
+
+@app.route("/dashboard")
+def dashboard():
+
+    username = session["username"]
+    user_info = db.execute("SELECT * FROM users WHERE username = :username",
+                        {"username": username}).fetchone()
+    print(user_info)
+    is_patient = user_info['is_patient']
+    if is_patient:
+        videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
+                            {"user_id": user_info['user_id']}).fetchall()
+    else:
+        videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
+                            {"user_id": user_info['user_id']}).fetchall()
+    return render_template("dashboard.html", user_info=user_info, videos=videos)
+
+async def allowed_files(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_image():
+    username = session['username']
+    user_info = db.execute("SELECT * FROM users WHERE username = :username",
+                        {"username": username}).fetchone() 
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part.')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if not allowed_files(file.filename):
+            flash('File type not supported! Please upload a file with extension ' + ','.join(app.config['ALLOWED_EXTENSIONS']))
+            return render_template("upload.html")
+        if file and allowed_files(file.filename):
+            filename = secure_filename(file.filename)
+            save_directory = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(save_directory)
+            # adding video into the database for later
+            db.execute("INSERT INTO videos (patient_id, filepath_old, physician_id, date)" + 
+                        " VALUES (:patient_id, :filepath_old, :physician_id, :date)",
+                        {"patient_id": user_info[0], "filepath_old": save_directory, 
+                         "physician_id": request.args['physician_id'], 
+                         "date": datetime.now().strftime('%Y-%m-%d')})
+            process_video = threading.Thread(target=increase_res, 
+                                             args=(save_directory,), daemon=True)
+            return redirect("/dashboard") 
+    else:
+        return render_template("upload.html")
+
+
+def increase_res(filename):
+    return filename
+
+
+@app.route('/view_video/<filename>')
+def view_video(filename):
+    return render_template("view_video.html")
 
 @app.route("/chat.html")
 def chat():
@@ -94,7 +154,7 @@ def channels():
 
 @app.route("/populate_channels")
 def populate_channels():
-    return jsonify({"chans":json.dumps(channels_list)})
+    return jsonify({"chans": dumps(channels_list)})
 
 @app.route("/<string:channel_name>.html")
 def in_channel(channel_name):
