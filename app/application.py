@@ -11,7 +11,11 @@ import requests
 from json import load, dumps
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from pathlib import Path
+from gan.upscale import gan
 
+
+from gan import gan
 
 # sets up environment and db
 app = Flask(__name__)
@@ -72,14 +76,15 @@ def val_login():
         # return render_template("welcome_user.html")
     return render_template("login.html", error_message="This password is incorrect!")
 
+channels_list = list()
 msg = dict()
 
 @app.route("/dashboard")
 def dashboard():
 
     username = session["username"]
-    user_info = db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).fetchone()
-    print(user_info)
+    user_info = db.execute("SELECT * FROM users WHERE username = :username",
+                        {"username": username}).fetchone()
     is_patient = user_info[4]
     if is_patient:
         videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
@@ -89,6 +94,31 @@ def dashboard():
                             {"user_id": user_info[0]}).fetchall()
     print(videos)
     return render_template("dashboard.html", user_info=user_info, videos=videos, username=username)
+
+# @app.route("/chat.html")
+# def chat():
+#     return render_template("chat.html")
+
+@app.route("/channels", methods=["POST"])
+def channels():
+    channel = request.form.get("chan")
+    msg[channel] = []
+    if channel not in channels_list:
+        channels_list.append(channel)
+        return jsonify({"error":False, "new_channel":channel})
+    else:
+        return jsonify({"error":True})
+
+@app.route("/populate_channels")
+def populate_channels():
+    return jsonify({"chans": dumps(channels_list)})
+
+# @app.route("/<string:channel_name>.html")
+# def in_channel(channel_name):
+#     print("I am sending you to a channel")
+#     msgs = msg[channel_name]
+#     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
+
 
 def allowed_files(filename):
     return '.' in filename and \
@@ -122,23 +152,33 @@ def upload_video():
             return redirect(request.url)
 
         if not allowed_files(file.filename):
-            flash('File type not supported! Please upload a file with extension ' + ','.join(app.config['ALLOWED_EXTENSIONS']))
+            flash('File type not supported! Please upload a file with extension ' + ', '.join(app.config['ALLOWED_EXTENSIONS']))
             return render_template("upload.html")
 
         if file and allowed_files(file.filename):
+            video_id = db.execute('SELECT * FROM videos ORDER BY id DESC LIMIT 1').fetchone()
+            if video_id is None:
+                video_id = 0
+            else:
+                video_id = video_id[0] + 1
+            parent_dir = Path(app.config['UPLOAD_FOLDER']) / f'video{video_id}'
+            os.mkdir(parent_dir)
             filename = secure_filename(file.filename)
-            save_directory = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(save_directory)
+            save_directory = str(Path(f'video{video_id}') / filename)
+            file.save(Path(app.config['UPLOAD_FOLDER']) / save_directory)
             # adding video into the database for later
             print(request.form['selected_physician'])
-            db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status)" +
-                        " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status)",
+            db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status, name)" +
+                        " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status, :name)",
                         {"patient_id": user_info[0], "filepath_old": save_directory,
-                         "filepath_new": 'high_res_' + save_directory, "physician_id": request.form['selected_physician'],
-                         "date": datetime.now().strftime('%Y-%m-%d'), "status": "processing"})
+                         "filepath_new": str(Path(f'video{video_id}') / ('high_res' + filename)),
+                         "physician_id": request.form['selected_physician'],
+                         "date": datetime.now().strftime('%Y-%m-%d'), "status": "processing",
+                         "name": request.form['title']})
             db.commit()
-            #process_video = threading.Thread(target=increase_res,
-            #                                 args=(save_directory,), daemon=True)
+            increase_res(str(Path(app.config['UPLOAD_FOLDER']) / save_directory), f'video{video_id}', 'high_res' + filename, video_id)
+            # process_video = threading.Thread(target=increase_res,
+            #                                  args=(filename, f'video{video_id}', 'high_res' + filename), daemon=True)
             return redirect(url_for("dashboard"))
     else:
         all_physicians = db.execute("SELECT user_id FROM users WHERE is_patient = :physician",
@@ -146,48 +186,29 @@ def upload_video():
         return render_template("upload.html", physicians=all_physicians)
 
 
-def increase_res(filename):
-    return filename
+def increase_res(videopath, folder_name, output_name, video_id):
+    print(f"Starting to process video {video_id}")
+    gan(videopath, folder_name, output_name)
+    db.execute("UPDATE videos SET status= :status WHERE id=:video_id",
+               {"status": "finished", "video_id": video_id})
 
+@app.route('/gan_test')
+def gan_test():
+    process = threading.Thread(target=gan, args=('app/video.mp4', "test", "thingy.mp4"))
+    process.daemon = True
+    process.start()
+
+    return "Processing..."
 
 @app.route('/view_video/<string:new_filename>')
 def view_video(new_filename):
     video_title = db.execute("SELECT video_name FROM videos WHERE new_filename = :new_filename", {"new_filename":new_filename}).fetchone()
     return render_template("view_video.html", filename=new_filename, video_title=video_title)
 
-@socketio.on("submit message")
-def message(data):
-    print("at submit message")
-    username = data["username"]
-    message = data["message"]
-    timestamp = datetime.now()
-    channel = data["channel"]
-    ts = str(timestamp)
-    msg[channel].append([username, message, timestamp])
-    print(msg)
-    emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
-
-if __name__ == '__main__':
-    app.run()
-
-"""
 @app.route("/chat.html")
 def chat():
     return render_template("chat.html")
 
-@app.route("/channels", methods=["POST"])
-def channels():
-    channel = request.form.get("chan")
-    msg[channel] = []
-    if channel not in channels_list:
-        channels_list.append(channel)
-        return jsonify({"error":False, "new_channel":channel})
-    else:
-        return jsonify({"error":True})
-
-@app.route("/populate_channels")
-def populate_channels():
-    return jsonify({"chans": dumps(channels_list)})
 # @app.route("/channels", methods=["POST"])
 # def channels():
 #     print("in channels")
@@ -223,4 +244,5 @@ def message(data):
     print(msg)
     emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
 
-"""
+if __name__ == '__main__':
+    app.run()

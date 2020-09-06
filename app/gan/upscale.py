@@ -18,50 +18,47 @@ Folder Structure:
 
 
 import os
-import sys
 import shutil
 import subprocess
 
-folder = "videos/"
+folder = "media/"
 
 def create_dir(path):
     if not os.path.exists(path):
         os.mkdir(path)
 
-def gan(video_path):
+def gan(video_path, folder_name, output_name):
     if not os.path.exists(video_path):
         print("Invalid path")
         return
 
-    base = os.path.splitext(os.path.basename(video_path))[0]
+    # base = os.path.splitext(os.path.basename(video_path))[0]
+    base = folder_name
 
-    if os.path.exists(folder + base):
-        shutil.rmtree(folder + base)
+    file_base = os.path.basename(video_path)
 
-    os.mkdir(folder + base)
+    # if os.path.exists(folder + base):
+    #    shutil.rmtree(folder + base)
+
+    # os.mkdir(folder + base)
     os.mkdir(folder + base + "/LR")
     os.mkdir(folder + base + "/HR")
 
-    os.rename(video_path, folder + base + "/original.mp4")
+    # os.rename(video_path, folder + base + "/" + file_base)
 
     # convert the low-res video into frames
     os.system(
-        f'ffmpeg -i {folder + base + "/original.mp4"} -q:v 1 -qmin 1 -qmax 1 {folder + base + "/LR/%06d.png"}'
+        f'ffmpeg -i {folder + base + "/" + file_base} -q:v 1 -qmin 1 -qmax 1 {folder + base + "/LR/%06d.png"}'
     )
 
     # run the TecoGAN on the frames
     os.system(
-        f'python3 main.py --output_dir {folder + base} --summary_dir {folder + base + "/"} --mode inference --input_dir_LR {folder + base + "/LR"} --output_pre HR --num_resblock 16 --checkpoint ./model/TecoGAN --output_ext png'
+        f'python3 app/gan/main.py --output_dir {folder + base} --summary_dir {folder + base + "/"} --mode inference --input_dir_LR {folder + base + "/LR"} --output_pre HR --num_resblock 16 --checkpoint ./app/gan/model/TecoGAN --output_ext png'
     )
 
     os.system(
-        f'ffmpeg -i {folder + base + "/HR/output_%06d.png"} {folder + base + "/scaled.mp4"}'
+        f'ffmpeg -i {folder + base + "/HR/output_%06d.png"} {folder + base + "/" + output_name}'
     )
 
     shutil.rmtree(folder + base + "/LR")
     shutil.rmtree(folder + base + "/HR")
-
-
-vid_path = sys.argv[1]
-
-gan(vid_path)

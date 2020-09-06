@@ -3,7 +3,7 @@
   <head>
       <title>Dashboard</title>
       <meta charset="utf-8">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.css">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
@@ -19,6 +19,7 @@
 
     <div class="container">
       <h2>Uploaded Videos</h2>
+      <em>Refresh the page to check if any processing video has finished.</em><br><br>
       <table id="table">
         <thead>
           <tr>
@@ -49,6 +50,15 @@
              {% if video[8]=="finished" %}
               <td><a href="view_video/{{ video[3] }}">click here</a></td>
              {% endif %}
+
+             {% if video[8] == "processing" %}
+             <td class="table-warning">{{ video[8] }}</td>
+             <td>Not available yet</td>
+             {% else %}
+             <td class="table-success">{{ video[8] }}</td>
+             <td><a href={{ video[3] }}>click here</a></td>
+             {% endif %}
+
             </tr>
           {% endfor %}
         </tbody>
@@ -121,7 +131,13 @@
     </div>
 
     <script>
-      $(document).ready(function () { $('#table').DataTable(); });
+      $(document).ready(function() {
+        $('#table').dataTable({
+          "language": {
+            "emptyTable": "You have not uploaded any videos yet! Click on the link below to upload a new video."
+          }
+        })
+      } );
     </script>
 
   </body>
