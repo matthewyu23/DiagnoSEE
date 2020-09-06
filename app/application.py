@@ -14,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 
 
+from gan import gan
+
 # sets up environment and db
 app = Flask(__name__)
 # Check for environment variable
@@ -173,6 +175,13 @@ def upload_video():
 def increase_res(filename):
     return filename
 
+@app.route('/gan_test')
+def gan_test():
+    process = threading.Thread(target=gan, args=('app/video.mp4', "test", "thingy.mp4"))
+    process.daemon = True
+    process.start()
+
+    return "Processing..."
 
 @app.route('/view_video/<filename>')
 def view_video(filename):

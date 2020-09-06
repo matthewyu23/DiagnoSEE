@@ -3,3 +3,4 @@ flask_session/
 .vscode/*
 venv/
 flask_session/*
+.DS_Store
