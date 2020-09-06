@@ -12,6 +12,7 @@ from json import load, dumps
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from pathlib import Path
+from gan.upscale import gan
 
 
 from gan import gan
@@ -84,7 +85,6 @@ def dashboard():
     username = session["username"]
     user_info = db.execute("SELECT * FROM users WHERE username = :username",
                         {"username": username}).fetchone()
-    print(user_info)
     is_patient = user_info[4]
     if is_patient:
         videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
@@ -92,7 +92,6 @@ def dashboard():
     else:
         videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
                             {"user_id": user_info[0]}).fetchall()
-    print(videos)
     return render_template("dashboard.html", user_info=user_info, videos=videos)
 
 # @app.route("/chat.html")
@@ -155,7 +154,6 @@ def upload_video():
             save_directory = str(Path(f'video{video_id}') / filename) 
             file.save(Path(app.config['UPLOAD_FOLDER']) / save_directory)
             # adding video into the database for later
-            print(request.form['selected_physician'])
             db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status)" +
                         " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status)",
                         {"patient_id": user_info[0], "filepath_old": save_directory,
@@ -163,8 +161,9 @@ def upload_video():
                          "physician_id": request.form['selected_physician'],
                          "date": datetime.now().strftime('%Y-%m-%d'), "status": "processing"})
             db.commit()
-            #process_video = threading.Thread(target=increase_res,
-            #                                 args=(save_directory,), daemon=True)
+            increase_res(str(Path(app.config['UPLOAD_FOLDER']) / save_directory), f'video{video_id}', 'high_res' + filename, video_id)
+            # process_video = threading.Thread(target=increase_res,
+            #                                  args=(filename, f'video{video_id}', 'high_res' + filename), daemon=True)
             return redirect(url_for("dashboard"))
     else:
         all_physicians = db.execute("SELECT user_id FROM users WHERE is_patient = :physician",
@@ -172,8 +171,11 @@ def upload_video():
         return render_template("upload.html", physicians=all_physicians)
 
 
-def increase_res(filename):
-    return filename
+def increase_res(videopath, folder_name, output_name, video_id):
+    print(f"Starting to process video {video_id}")
+    gan(videopath, folder_name, output_name)
+    db.execute("UPDATE videos SET status= :status WHERE id=:video_id", 
+               {"status": "finished", "video_id": video_id})
 
 @app.route('/gan_test')
 def gan_test():

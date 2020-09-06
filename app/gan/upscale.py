@@ -21,7 +21,7 @@ import os
 import shutil
 import subprocess
 
-folder = "app/videos/"
+folder = "media/"
 
 def create_dir(path):
     if not os.path.exists(path):
@@ -44,7 +44,7 @@ def gan(video_path, folder_name, output_name):
     os.mkdir(folder + base + "/LR")
     os.mkdir(folder + base + "/HR")
 
-    os.rename(video_path, folder + base + "/" + file_base)
+    # os.rename(video_path, folder + base + "/" + file_base)
 
     # convert the low-res video into frames
     os.system(
