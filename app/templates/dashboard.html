@@ -30,8 +30,8 @@
             {% else %}
             <th>Patient</th>
             {% endif %}
-            <th>Link</th>
             <th>Status</th>
+            <th>Link</th>
           </tr>
         </thead>
         <tbody>
@@ -45,8 +45,10 @@
              {% else %}
              <td>{{ video[1] }}</td>
              {% endif %}
-             <td><a href={{ video[3] }}>click here</a></td>
              <td>{{ video[8] }}</td>
+             {% if video[8]=="finished" %}
+              <td><a href="view_video/{{ video[3] }}">click here</a></td>
+             {% endif %}
             </tr>
           {% endfor %}
         </tbody>
@@ -61,7 +63,20 @@
     {% endif %}
 
     <script>
+      function db_update() {
+        const req_chans = new XMLHttpRequest();
+        req_chans.open('GET', '/populate_db_table');
+        req_chans.send();
+
+        req_chans.onload = function() {
+            console.log("this is working!!!")
+        }
+      }
+
+      setInterval(db_update, 1000);
+
       localStorage.setItem('username', document.querySelector("#username_hidden").innerHTML);
+      /**
       let videos_table = [
         { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4"},
         { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4"}
@@ -93,12 +108,13 @@
               cell.appendChild(elLink);
             }
             else {
-            let text = document.createTextNode(element[key]);
-            cell.appendChild(text);
+              let text = document.createTextNode(element[key]);
+              cell.appendChild(text);
             }
           }
         }
-      }
+      } */
+    </script>
     <!-- logout button -->
     <br><br><div class="container">
       <button id="logout" type="button" onclick="location.href='/'">Log out</button>
