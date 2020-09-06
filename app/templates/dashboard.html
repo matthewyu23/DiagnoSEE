@@ -14,20 +14,29 @@
     <div class="container">
       <h1>Uploaded Videos</h1>
       <table id="table" class="">
-      <!-- here goes our data! -->
-      </table>
-    </div>
-    <div class="container">
-      <h1><a href={{ url_for('upload_video') }}>Upload a new video</a></h1>
-      <table>
         {% for video in videos %}
-          <th>{{ video[6] }}</th>
-          <th>{{ video[0] }}</th>
-          <th>{{ video[7] }}</th>
-          <th>{{ video[4] }}</th>
+          <tr>
+           <th>{{ video[6].strftime('%m/%d/%Y') }}</th>
+           <th>#{{ video[0] }}</th>
+           {% if user_info[4] %}
+           <th>{{ video[5] }}</th>
+           {% else %}
+           <th>{{ video[1] }}</th>
+           {% endif %}
+           <th>{{ video[7] }}</th>
+           <th>{{ video[3] }}</th>
+           <th>{{ video[8] }}</th>
+          </tr>
         {% endfor %}
       </table>
     </div>
+
+    {% if user_info[4]%}
+    <div class="container">
+      <h1><a href={{ url_for('upload_video') }}>Upload a new video</a></h1>
+    </div>
+    {% endif %}
+
     <script>
       localStorage.setItem('username', document.querySelector("#username_hidden").innerHTML);
       let videos_table = [
