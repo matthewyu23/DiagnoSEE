@@ -11,6 +11,7 @@ import requests
 from json import load, dumps
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from pathlib import Path
 
 
 # sets up environment and db
@@ -141,15 +142,19 @@ def upload_video():
             return render_template("upload.html")
 
         if file and allowed_files(file.filename):
+            video_id = db.execute('SELECT * FROM videos ORDER BY id DESC LIMIT 1').fetchone()[0] + 1
+            parent_dir = Path(app.config['UPLOAD_FOLDER']) / f'video{video_id}'
+            os.mkdir(parent_dir)
             filename = secure_filename(file.filename)
-            save_directory = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            save_directory = str(Path(f'video{video_id}') / filename) 
             file.save(save_directory)
             # adding video into the database for later
             print(request.form['selected_physician'])
             db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status)" +
                         " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status)",
                         {"patient_id": user_info[0], "filepath_old": save_directory,
-                         "filepath_new": 'high_res_' + save_directory, "physician_id": request.form['selected_physician'],
+                         "filepath_new": str(Path(f'video{video_id}') / 'high_res' + filename), 
+                         "physician_id": request.form['selected_physician'],
                          "date": datetime.now().strftime('%Y-%m-%d'), "status": "processing"})
             db.commit()
             #process_video = threading.Thread(target=increase_res,

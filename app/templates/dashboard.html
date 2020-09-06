@@ -38,11 +38,11 @@
 
     <script>
       let videos_table = [
-        { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4"},
-        { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4"}
+        { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4", status: "finished"},
+        { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4", status: "finished"}
       ];
 
-      let headers = ["Date", "Video #", "Physician", "Video title", "Link"]
+      let headers = ["Date", "Video #", "Physician", "Video title", "Link", "Status"]
       //var videos_table = {{videos_array}}
 
       function generateTableHead(table, data) {
