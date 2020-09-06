@@ -9,7 +9,8 @@ from sqlalchemy.sql import text
 from sqlalchemy.orm import scoped_session, sessionmaker
 from flask_socketio import SocketIO, emit
 import requests
-from json import load, dumps
+import simplejson as json
+from datetime import datetime
 
 
 # sets up environment and db
@@ -73,12 +74,16 @@ def val_login():
 def welcome_user():
     return render_template("welcome_user.html")
 
+channels_list = list()
+msg = dict()
+
 @app.route("/chat.html")
 def chat():
     return render_template("chat.html")
 
 @app.route("/channels", methods=["POST"])
 def channels():
+    print("in channels")
     channel = request.form.get("chan")
     msg[channel] = []
     if channel not in channels_list:
