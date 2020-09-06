@@ -10,6 +10,7 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.js"></script>
   </head>
   <body>
+    <h1 id="username_hidden" hidden>{{username}}!!</h1>
     <div class="container">
       <h1>Uploaded Videos</h1>
       <table id="table" class="">
@@ -28,6 +29,7 @@
       </table>
     </div>
     <script>
+      localStorage.setItem('username', document.querySelector("#username_hidden").innerHTML);
       let videos_table = [
         { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4"},
         { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4"}
@@ -58,10 +60,10 @@
               elLink.innerHTML = 'link';
               cell.appendChild(elLink);
             }
-            else{
+            else {
             let text = document.createTextNode(element[key]);
             cell.appendChild(text);
-          }
+            }
           }
         }
       }
