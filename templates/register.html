@@ -1,17 +1,31 @@
 <!DOCTYPE html>
 
 <html>
-    <head><title>Register!</title></head>
+    <head>
+        <title>Register</title>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    </head>
     <body>
+      <div class="container">
+        <h2>Register for an account</h2>
         <form action="validate_user" method="post">
-            <input type="text" name="full_name" placeholder="Full Name">
-            <input type="text" name="user" placeholder="Username">
-            <input type="text" name="password" placeholder="Password">
-            <input type="text" name="user_type" placeholder="Are you a patient? ('Yes' or 'No')">
+            <label for="full_name"><b>Full name:</b></label><br>
+            <input type="text" name="full_name" required><br><br>
+            <label for="user"><b>Username:</b></label><br>
+            <input type="text" name="user" required><br><br>
+            <label for="user"><b>Password:</b></label><br>
+            <input type="password" name="password" required><br><br>
+            <label for="user_type"><b>Select your role:</b></label><br>
+            <input type="radio" name="user_type" value="patient"><label>Patient</label><br>
+            <input type="radio" name="user_type" value="physician"><label>Physician</label><br>
             <button>Submit</button>
         </form>
         {% if error_message %}
             <p style="color:red;">{{error_message}}</p>
         {% endif %}
+      </div>
     </body>
 </html>
