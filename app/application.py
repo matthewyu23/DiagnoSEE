@@ -186,7 +186,7 @@ msg = dict()
 def view_video(directory, filename):
     video_title = db.execute("SELECT name FROM videos WHERE filepath_new = :new_filename",
                             {"new_filename":str(Path(directory) / filename)}).fetchone()
-    """
+
     print(type(video_title))
     vid_title = video_title[0]
     print(type(vid_title))
@@ -195,8 +195,8 @@ def view_video(directory, filename):
         msgs = None
     else:
         msgs = msg[vid_title]
-    """
-    return render_template("view_video.html", filename=str(Path(directory) / filename), 
+
+    return render_template("view_video.html", filename=str(Path(directory) / filename), filename_old=str(Path(directory) / filename[9:]),
                             video_title=vid_title)
 
 @socketio.on("submit message")
