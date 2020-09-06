@@ -46,6 +46,10 @@
              {% else %}
              <td>{{ video[1] }}</td>
              {% endif %}
+             <td>{{ video[8] }}</td>
+             {% if video[8]=="finished" %}
+              <td><a href="view_video/{{ video[3] }}">click here</a></td>
+             {% endif %}
 
              {% if video[8] == "processing" %}
              <td class="table-warning">{{ video[8] }}</td>
@@ -68,15 +72,27 @@
     </div>
     {% endif %}
 
-<<<<<<< HEAD
     <script>
+      function db_update() {
+        const req_chans = new XMLHttpRequest();
+        req_chans.open('GET', '/populate_db_table');
+        req_chans.send();
+
+        req_chans.onload = function() {
+            console.log("this is working!!!")
+        }
+      }
+
+      setInterval(db_update, 1000);
+
       localStorage.setItem('username', document.querySelector("#username_hidden").innerHTML);
+      /**
       let videos_table = [
-        { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4", status: "finished"},
-        { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4", status: "finished"}
+        { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4"},
+        { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4"}
       ];
 
-      let headers = ["Date", "Video #", "Physician", "Video title", "Link", "Status"]
+      let headers = ["Date", "Video #", "Physician", "Video title", "Link"]
       //var videos_table = {{videos_array}}
 
       function generateTableHead(table, data) {
@@ -102,14 +118,13 @@
               cell.appendChild(elLink);
             }
             else {
-            let text = document.createTextNode(element[key]);
-            cell.appendChild(text);
+              let text = document.createTextNode(element[key]);
+              cell.appendChild(text);
             }
           }
         }
-      }
-=======
->>>>>>> 11c457bdb85a6b9e933400e11c237ec738ea92a7
+      } */
+    </script>
     <!-- logout button -->
     <br><br><div class="container">
       <button id="logout" type="button" onclick="location.href='/'">Log out</button>

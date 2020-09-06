@@ -58,7 +58,7 @@ Flags.DEFINE_integer('name_video_queue_capacity', 512, 'The capacity of the file
 Flags.DEFINE_integer('video_queue_capacity', 256, 'The capacity of the video queue (suggest large to ensure'
                                                    'enough random shuffle')
 Flags.DEFINE_integer('video_queue_batch', 2, 'shuffle_batch queue capacity')
-                                                   
+
 # Training details
 # The data preparing operation
 Flags.DEFINE_integer('RNN_N', 10, 'The number of the rnn recurrent length')
@@ -105,7 +105,7 @@ Flags.DEFINE_boolean('D_LAYERLOSS', True, 'Whether use layer loss from D')
 FLAGS = Flags.FLAGS
 
 # Set CUDA devices correctly if you use multiple gpu system
-os.environ["CUDA_VISIBLE_DEVICES"]=FLAGS.cudaID 
+os.environ["CUDA_VISIBLE_DEVICES"]=FLAGS.cudaID
 # Fix randomness
 my_seed = FLAGS.rand_seed
 rn.seed(my_seed)
@@ -126,13 +126,13 @@ if not os.path.exists(FLAGS.summary_dir):
 class Logger(object):
     def __init__(self):
         self.terminal = sys.stdout
-        self.log = open(FLAGS.summary_dir + "logfile.txt", "a") 
+        self.log = open(FLAGS.summary_dir + "logfile.txt", "a")
     def write(self, message):
         self.terminal.write(message)
-        self.log.write(message) 
+        self.log.write(message)
     def flush(self):
         self.log.flush()
-        
+
 sys.stdout = Logger()
 
 def printVariable(scope, key = tf.GraphKeys.MODEL_VARIABLES):
@@ -144,10 +144,10 @@ def printVariable(scope, key = tf.GraphKeys.MODEL_VARIABLES):
         print ("Shape: " + str(k[1]))
         total_sz += np.prod(k[1])
     print("total size: %d" %total_sz)
-    
+
 def preexec(): # Don't forward signals.
     os.setpgrp()
-    
+
 def testWhileTrain(FLAGS, testno = 0):
     '''
         this function is called during training, Hard-Coded!!
@@ -157,13 +157,13 @@ def testWhileTrain(FLAGS, testno = 0):
     '''
     desstr = os.path.join(FLAGS.output_dir, 'train/') # saving in the ./train/ directory
     cmd1 = ["python3", "main.py", # never tested with python2...
-        "--output_dir", desstr, 
+        "--output_dir", desstr,
         "--summary_dir", desstr,
         "--mode","inference",
         "--num_resblock", "%d"%FLAGS.num_resblock,
         "--checkpoint", os.path.join(FLAGS.output_dir, 'model-%d'%testno),
         "--cudaID", FLAGS.cudaID]
-    # a folder for short test 
+    # a folder for short test
     cmd1 += ["--input_dir_LR", "./LR/calendar/", # update the testing sequence
              "--output_pre", "", # saving in train folder directly
              "--output_name", "%09d"%testno, # name
@@ -172,7 +172,7 @@ def testWhileTrain(FLAGS, testno = 0):
     print(' '.join(cmd1))
     # ignore signals
     return subprocess.Popen(cmd1, preexec_fn = preexec)
-    
+
 if False: # If you want to take a look of the configuration, True
     print_configuration_op(FLAGS)
 
@@ -183,6 +183,7 @@ if FLAGS.mode == 'inference':
 
     # Declare the test data reader
     inference_data = inference_data_loader(FLAGS)
+    print(inference_data.inputs)
     input_shape = [1,] + list(inference_data.inputs[0].shape)
     output_shape = [1,input_shape[1]*4, input_shape[2]*4, 3]
     oh = input_shape[1] - input_shape[1]//8 * 8
@@ -190,14 +191,14 @@ if FLAGS.mode == 'inference':
     paddings = tf.constant([[0,0], [0,oh], [0,ow], [0,0]])
     print("input shape:", input_shape)
     print("output shape:", output_shape)
-    
+
     # build the graph
     inputs_raw = tf.placeholder(tf.float32, shape=input_shape, name='inputs_raw')
-    
+
     pre_inputs = tf.Variable(tf.zeros(input_shape), trainable=False, name='pre_inputs')
     pre_gen = tf.Variable(tf.zeros(output_shape), trainable=False, name='pre_gen')
     pre_warp = tf.Variable(tf.zeros(output_shape), trainable=False, name='pre_warp')
-    
+
     transpose_pre = tf.space_to_depth(pre_warp, 4)
     inputs_all = tf.concat( (inputs_raw, transpose_pre), axis = -1)
     with tf.variable_scope('generator'):
@@ -205,24 +206,24 @@ if FLAGS.mode == 'inference':
         # Deprocess the images outputed from the model, and assign things for next frame
         with tf.control_dependencies([ tf.assign(pre_inputs, inputs_raw)]):
             outputs = tf.assign(pre_gen, deprocess(gen_output))
-    
+
     inputs_frames = tf.concat( (pre_inputs, inputs_raw), axis = -1)
     with tf.variable_scope('fnet'):
         gen_flow_lr = fnet( inputs_frames, reuse=False)
-        gen_flow_lr = tf.pad(gen_flow_lr, paddings, "SYMMETRIC") 
+        gen_flow_lr = tf.pad(gen_flow_lr, paddings, "SYMMETRIC")
         gen_flow = upscale_four(gen_flow_lr*4.0)
         gen_flow.set_shape( output_shape[:-1]+[2] )
     pre_warp_hi = tf.contrib.image.dense_image_warp(pre_gen, gen_flow)
     before_ops = tf.assign(pre_warp, pre_warp_hi)
 
     print('Finish building the network')
-    
+
     # In inference time, we only need to restore the weight of the generator
     var_list = tf.get_collection(tf.GraphKeys.MODEL_VARIABLES, scope='generator')
     var_list = var_list + tf.get_collection(tf.GraphKeys.MODEL_VARIABLES, scope='fnet')
-    
+
     weight_initiallizer = tf.train.Saver(var_list)
-    
+
     # Define the initialization operation
     init_op = tf.global_variables_initializer()
     local_init_op = tf.local_variables_initializer()
@@ -235,19 +236,19 @@ if FLAGS.mode == 'inference':
         image_dir = os.path.join(FLAGS.output_dir, FLAGS.output_pre)
     if not os.path.exists(image_dir):
         os.makedirs(image_dir)
-        
+
     with tf.Session(config=config) as sess:
         # Load the pretrained model
         sess.run(init_op)
         sess.run(local_init_op)
-        
+
         print('Loading weights from ckpt model')
         weight_initiallizer.restore(sess, FLAGS.checkpoint)
         if False: # If you want to take a look of the weights, True
             printVariable('generator')
             printVariable('fnet')
         max_iter = len(inference_data.inputs)
-                
+
         srtime = 0
         print('Frame evaluation starts!!')
         for i in range(max_iter):
@@ -258,8 +259,8 @@ if FLAGS.mode == 'inference':
                 sess.run(before_ops, feed_dict=feed_dict)
             output_frame = sess.run(outputs, feed_dict=feed_dict)
             srtime += time.time()-t0
-            
-            if(i >= 5): 
+
+            if(i >= 5):
                 name, _ = os.path.splitext(os.path.basename(str(inference_data.paths_LR[i])))
                 filename = FLAGS.output_name+'_'+name
                 print('saving image %s' % filename)
@@ -268,14 +269,14 @@ if FLAGS.mode == 'inference':
             else:# First 5 is a hard-coded symmetric frame padding, ignored but time added!
                 print("Warming up %d"%(5-i))
     print( "total time " + str(srtime) + ", frame number " + str(max_iter) )
-        
+
 # The training mode
 elif FLAGS.mode == 'train':
     # hard coded save
     filelist = ['main.py','lib/Teco.py','lib/frvsr.py','lib/dataloader.py','lib/ops.py']
     for filename in filelist:
         shutil.copyfile('./' + filename, FLAGS.summary_dir + filename.replace("/","_"))
-        
+
     useValidat = tf.placeholder_with_default( tf.constant(False, dtype=tf.bool), shape=() )
     rdata = frvsr_gpu_data_loader(FLAGS, useValidat)
     # Data = collections.namedtuple('Data', 'paths_HR, s_inputs, s_targets, image_count, steps_per_epoch')
@@ -286,7 +287,7 @@ elif FLAGS.mode == 'train':
         Net = FRVSR( rdata.s_inputs, rdata.s_targets, FLAGS )
     # Network = collections.namedtuple('Network', 'gen_output, train, learning_rate, update_list, '
     #                                     'update_list_name, update_list_avg, image_summary')
-    
+
     # Add scalar summary
     tf.summary.scalar('learning_rate', Net.learning_rate)
     train_summary = []
@@ -295,7 +296,7 @@ elif FLAGS.mode == 'train':
         train_summary += [tf.summary.scalar(key, value)]
     train_summary += Net.image_summary
     merged = tf.summary.merge(train_summary)
-    
+
     validat_summary = [] # val data statistics is not added to average
     uplen = len(Net.update_list)
     for key, value in zip(Net.update_list_name[:uplen], Net.update_list):
@@ -308,7 +309,7 @@ elif FLAGS.mode == 'train':
     # variable lists
     all_var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
     tfflag = tf.GraphKeys.MODEL_VARIABLES #tf.GraphKeys.TRAINABLE_VARIABLES
-    
+
     if (FLAGS.checkpoint is not None) and (FLAGS.pre_trained_model is True):
         model_var_list = tf.get_collection(tfflag, scope='generator') + tf.get_collection(tfflag, scope='fnet')
         assign_ops = get_existing_from_ckpt(FLAGS.checkpoint, model_var_list, rest_zero=True, print_level=1)
@@ -318,30 +319,30 @@ elif FLAGS.mode == 'train':
             dis_list = get_existing_from_ckpt(FLAGS.checkpoint, model_var_list, print_level=0)
             print('Prepare to load %d weights from the pre-trained model for discriminator'%len(dis_list))
             assign_ops += dis_list
-        
+
     if FLAGS.vgg_scaling > 0.0: # VGG weights are not trainable
         vgg_var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='vgg_19')
         vgg_restore = tf.train.Saver(vgg_var_list)
-    
+
     print('Finish building the network.')
-    
+
     # Start the session
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     # init_op = tf.initialize_all_variables() # MonitoredTrainingSession will initialize automatically
     with tf.train.MonitoredTrainingSession(config=config, save_summaries_secs=None, save_checkpoint_secs=None) as sess:
         train_writer = tf.summary.FileWriter(FLAGS.summary_dir, sess.graph)
-        
+
         printVariable('generator')
         printVariable('fnet')
         if FLAGS.ratio>0:
             printVariable('tdiscriminator')
-                
+
         if FLAGS.vgg_scaling > 0.0:
             printVariable('vgg_19', tf.GraphKeys.GLOBAL_VARIABLES)
             vgg_restore.restore(sess, FLAGS.vgg_ckpt)
             print('VGG19 restored successfully!!')
-                
+
         if (FLAGS.checkpoint is not None):
             if (FLAGS.pre_trained_model is False):
                 print('Loading everything from the checkpoint to continue the training...')
@@ -350,7 +351,7 @@ elif FLAGS.mode == 'train':
             else:
                 print('Loading weights from the pre-trained model to start a new training...')
                 sess.run(assign_ops) # only restore existing model weights
-            
+
         print('The first run takes longer time for training data loading...')
         # get the session for save
         _sess = sess
@@ -364,7 +365,7 @@ elif FLAGS.mode == 'train':
             init_run_no = sess.run(Net.global_step)
             saver.save(save_sess, os.path.join(FLAGS.output_dir, 'model'), global_step=init_run_no)
             testWhileTrain(FLAGS, init_run_no) # make sure that testWhileTrain works
-        
+
         # Performing the training
         frame_len = (FLAGS.RNN_N*2-1) if FLAGS.pingpang else FLAGS.RNN_N
         max_iter, step, start = FLAGS.max_iter, 0, time.time()
@@ -377,17 +378,17 @@ elif FLAGS.mode == 'train':
             for step in range(max_iter):
                 run_step = sess.run(Net.global_step) + 1
                 fetches = { "train": Net.train, "learning_rate": Net.learning_rate }
-            
+
                 if (run_step % FLAGS.display_freq) == 0:
                     for key, value in zip(Net.update_list_name, Net.update_list_avg):
                         fetches[str(key)] = value
                 if (run_step % FLAGS.summary_freq) == 0:
                     fetches["summary"] = merged
-                    
+
                 results = sess.run(fetches)
                 if(step == 0):
                     print('Optimization starts!!!(Ctrl+C to stop, will try saving the last model...)')
-                
+
                 if (run_step % FLAGS.summary_freq) == 0:
                     print('Run and Recording summary!!')
                     train_writer.add_summary(results['summary'], run_step)
@@ -400,26 +401,26 @@ elif FLAGS.mode == 'train':
                     print('-----------Validation data scalars-----------')
                     for name in Net.update_list_name[:uplen]:
                         print('val_' + name, val_results['val_' + name])
-                        
+
                 if (run_step % FLAGS.display_freq) == 0:
                     train_epoch = math.ceil(run_step / rdata.steps_per_epoch)
                     train_step = (run_step - 1) % rdata.steps_per_epoch + 1
                     rate = (step + 1) * FLAGS.batch_size / (time.time() - start)
                     remaining = (max_iter - step) * FLAGS.batch_size / rate
-                    print("progress  epoch %d  step %d  image/sec %0.1fx%02d  remaining %dh%dm" % 
-                        (train_epoch, train_step, rate, frame_len, 
+                    print("progress  epoch %d  step %d  image/sec %0.1fx%02d  remaining %dh%dm" %
+                        (train_epoch, train_step, rate, frame_len,
                         remaining // 3600, (remaining%3600) // 60))
-                        
+
                     print("global_step", run_step)
                     print("learning_rate", results['learning_rate'])
                     for name in Net.update_list_name:
                         print(name, results[name])
-                        
+
                 if (run_step % FLAGS.save_freq) == 0:
                     print('Save the checkpoint')
                     saver.save(save_sess, os.path.join(FLAGS.output_dir, 'model'), global_step=int(run_step))
                     testWhileTrain(FLAGS, run_step)
-                
+
         except KeyboardInterrupt:
             if step > 1:
                 print('main.py: KeyboardInterrupt->saving the checkpoint')
