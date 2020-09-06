@@ -47,7 +47,7 @@ def val_user():
     full_name = request.form.get("full_name")
     username = request.form.get("user")
     password = request.form.get("password")
-    is_patient = request.form.get("user_type")
+    is_patient = True if request.form.get("user_type") == "patient" else False
     if db.execute("SELECT * FROM users WHERE username = :username", {"username":username}).rowcount == 0:
         db.execute("INSERT INTO users (full_name, username, password, is_patient) VALUES (:full_name, :username, :password, :is_patient)", {"full_name":full_name, "username":username, "password":password, "is_patient":is_patient})
         db.commit()
@@ -88,7 +88,7 @@ def dashboard():
         videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
                             {"user_id": user_info['user_id']}).fetchall()
     return render_template("dashboard.html", user_info=user_info, videos=videos)
-    
+
 @app.route("/chat.html")
 def chat():
     return render_template("chat.html")
@@ -122,7 +122,7 @@ async def allowed_files(filename):
 def upload_image():
     username = session['username']
     user_info = db.execute("SELECT * FROM users WHERE username = :username",
-                        {"username": username}).fetchone() 
+                        {"username": username}).fetchone()
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part.')
@@ -139,14 +139,14 @@ def upload_image():
             save_directory = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(save_directory)
             # adding video into the database for later
-            db.execute("INSERT INTO videos (patient_id, filepath_old, physician_id, date)" + 
+            db.execute("INSERT INTO videos (patient_id, filepath_old, physician_id, date)" +
                         " VALUES (:patient_id, :filepath_old, :physician_id, :date)",
-                        {"patient_id": user_info[0], "filepath_old": save_directory, 
-                         "physician_id": request.args['physician_id'], 
+                        {"patient_id": user_info[0], "filepath_old": save_directory,
+                         "physician_id": request.args['physician_id'],
                          "date": datetime.now().strftime('%Y-%m-%d')})
-            process_video = threading.Thread(target=increase_res, 
+            process_video = threading.Thread(target=increase_res,
                                              args=(save_directory,), daemon=True)
-            return redirect("/dashboard") 
+            return redirect("/dashboard")
     else:
         return render_template("upload.html")
 
