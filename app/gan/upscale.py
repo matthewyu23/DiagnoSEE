@@ -37,6 +37,10 @@ def gan(video_path, folder_name, output_name):
 
     file_base = os.path.basename(video_path)
 
+    # if os.path.exists(folder + base):
+    #    shutil.rmtree(folder + base)
+
+    # os.mkdir(folder + base)
     os.mkdir(folder + base + "/LR")
     os.mkdir(folder + base + "/HR")
 

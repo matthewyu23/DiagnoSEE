@@ -92,7 +92,8 @@ def dashboard():
     else:
         videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
                             {"user_id": user_info[0]}).fetchall()
-    return render_template("dashboard.html", user_info=user_info, videos=videos)
+    print(videos)
+    return render_template("dashboard.html", user_info=user_info, videos=videos, username=username)
 
 # @app.route("/chat.html")
 # def chat():
@@ -122,6 +123,18 @@ def populate_channels():
 def allowed_files(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+@app.route("/populate_db_table")
+def populate_table():
+    user_info = db.execute("SELECT * FROM users WHERE username = :username", {"username": session["username"]}).fetchone()
+    is_patient = user_info[4]
+    if is_patient:
+        videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
+                            {"user_id": user_info[0]}).fetchall()
+    else:
+        videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
+                            {"user_id": user_info[0]}).fetchall()
+    return render_template("dashboard.html", user_info=user_info, videos=videos)
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_video():
@@ -177,7 +190,7 @@ def upload_video():
 def increase_res(videopath, folder_name, output_name, video_id):
     print(f"Starting to process video {video_id}")
     gan(videopath, folder_name, output_name)
-    db.execute("UPDATE videos SET status= :status WHERE id=:video_id", 
+    db.execute("UPDATE videos SET status= :status WHERE id=:video_id",
                {"status": "finished", "video_id": video_id})
 
 @app.route('/gan_test')
@@ -188,9 +201,10 @@ def gan_test():
 
     return "Processing..."
 
-@app.route('/view_video/<filename>')
-def view_video(filename):
-    return render_template("view_video.html")
+@app.route('/view_video/<string:new_filename>')
+def view_video(new_filename):
+    video_title = db.execute("SELECT video_name FROM videos WHERE new_filename = :new_filename", {"new_filename":new_filename}).fetchone()
+    return render_template("view_video.html", filename=new_filename, video_title=video_title)
 
 @app.route("/chat.html")
 def chat():

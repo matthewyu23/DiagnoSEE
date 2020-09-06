@@ -9,6 +9,7 @@
       <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
   </head>
   <body>
+    <p id="video_title_hidden" hidden>{{video_title}}</p>
     <div class="container" style="text-align:center">
       <h1>View Video</h1>
       <!-- instructions -->
@@ -30,7 +31,7 @@
           <!-- embed video with default controls + Download option-->
           <label>Original video</label>&nbsp<a href="" download>(Download)</a><br>
           <video id="video_old" width="100%" controls>
-            <source src="sample_video.mp4" type="video/mp4">
+            <source src="{{ filename }}" type="video/mp4">
             Your browser does not support HTML video.
           </video><br>
           <!-- display current time in the video -->
@@ -49,7 +50,7 @@
           <!-- embed video with default controls + Download option-->
           <label>High-resolution video</label>&nbsp<a href="" download>(Download)</a><br>
           <video id="video_new" width="100%" controls>
-            <source src="sample_video.mp4" type="video/mp4">
+            <source src=" {{ filename }} " type="video/mp4">
             Your browser does not support HTML video.
           </video><br>
           <!-- display current time in the video -->
@@ -167,7 +168,7 @@
         socket.on('connect', function() {
           document.querySelector('#message').onsubmit = function(event) {
             event.preventDefault();
-            var chan_name = document.querySelector('#channelname').innerHTML; // THIS NEEDS TO BE RELATED TO SOMETHING FROM THE VIDEOS DB -- can keep the name "chan_name" for the vairable, but change other stuff
+            var chan_name = document.querySelector('#video_title_hidden').innerHTML; // THIS NEEDS TO BE RELATED TO SOMETHING FROM THE VIDEOS DB -- can keep the name "chan_name" for the vairable, but change other stuff
             localStorage.setItem('channel', chan_name);
             console.log('creating message');
             const message = document.querySelector('#new_message').value;
