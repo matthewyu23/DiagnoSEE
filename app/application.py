@@ -186,6 +186,7 @@ msg = dict()
 def view_video(directory, filename):
     video_title = db.execute("SELECT name FROM videos WHERE filepath_new = :new_filename",
                             {"new_filename":str(Path(directory) / filename)}).fetchone()
+    """
     print(type(video_title))
     vid_title = video_title[0]
     print(type(vid_title))
@@ -194,8 +195,9 @@ def view_video(directory, filename):
         msgs = None
     else:
         msgs = msg[vid_title]
+    """
     return render_template("view_video.html", filename=str(Path(directory) / filename), 
-                            video_title=vid_title, msgs=msgs)
+                            video_title=vid_title)
 
 @socketio.on("submit message")
 def message(data):
@@ -212,6 +214,12 @@ def message(data):
     print("filename:", filename)
     return render_template("view_video.html", filename=filename, filename_old=filename[9:],
     directory=directory, video_title=video_title)
+
+@app.route('/<string:channel>')
+def all_messages(channel):
+    msgs = msg[channel]
+    return render_template("view_video.html", filename=filename, filename_old=filename[9:],
+    directory=directory, video_title=video_title, msgs=msgs)
 
 @app.route('/uploads/<string:directory>/<string:filename>')
 def uploaded_file(directory, filename):

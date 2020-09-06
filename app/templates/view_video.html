@@ -60,9 +60,10 @@
 
         socket.on('announce message', function(data) {
           console.log('at annouce message');
-          const p = document.createElement('p');
-          p.innerHTML = `${data.username}: ${data.message} ${data.timestamp}`;
-          document.querySelector('#messages').append(p);
+          redirect(url_for(`/${data.channel}`));
+          // const p = document.createElement('p');
+          // p.innerHTML = `${data.username}: ${data.message} ${data.timestamp}`;
+          // document.querySelector('#messages').append(p);
           console.log("SOCKET IO WORKKSSSSSIUFERIUIRUEHIURG");
         });
     });
