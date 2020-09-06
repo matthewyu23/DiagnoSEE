@@ -195,6 +195,8 @@ def increase_res(videopath, folder_name, output_name, video_id):
     gan(videopath, folder_name, output_name)
     db.execute("UPDATE videos SET status= :status WHERE id=:video_id",
                {"status": "finished", "video_id": video_id})
+    db.commit()
+
 
 @app.route('/gan_test')
 def gan_test():
