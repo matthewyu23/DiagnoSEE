@@ -34,7 +34,7 @@ app.config['ALLOWED_EXTENSIONS'] = ['mp4', 'mov']
 app.config['UPLOAD_FOLDER'] = 'media/'
 
 # Set up database
-engine = create_engine(os.getenv("DATABASE_URL"))
+engine = create_engine(os.getenv("DATABASE_URL"), max_overflow=20)
 db = scoped_session(sessionmaker(bind=engine))
 
 @app.route("/")
@@ -94,31 +94,7 @@ def dashboard():
                             {"user_id": user_info[0]}).fetchall()
     print(videos)
     return render_template("dashboard.html", user_info=user_info, videos=videos, username=username)
-
-# @app.route("/chat.html")
-# def chat():
-#     return render_template("chat.html")
-
-@app.route("/channels", methods=["POST"])
-def channels():
-    channel = request.form.get("chan")
-    msg[channel] = []
-    if channel not in channels_list:
-        channels_list.append(channel)
-        return jsonify({"error":False, "new_channel":channel})
-    else:
-        return jsonify({"error":True})
-
-@app.route("/populate_channels")
-def populate_channels():
-    return jsonify({"chans": dumps(channels_list)})
-
-# @app.route("/<string:channel_name>.html")
-# def in_channel(channel_name):
-#     print("I am sending you to a channel")
-#     msgs = msg[channel_name]
-#     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
-
+    
 
 def allowed_files(filename):
     return '.' in filename and \
