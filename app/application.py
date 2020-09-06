@@ -69,17 +69,19 @@ def val_login():
     pword = ((db.execute("SELECT password FROM users WHERE username = :username", {"username":uname}).fetchall())[0])[0]
     if password == pword:
         session["username"] = uname
-        return redirect(url_for("dashboard", _external=True), username=uname)
+        return redirect(url_for("dashboard", _external=True))
         # return render_template("welcome_user.html")
     return render_template("login.html", error_message="This password is incorrect!")
 
+channels_list = list()
 msg = dict()
 
 @app.route("/dashboard")
 def dashboard():
 
     username = session["username"]
-    user_info = db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).fetchone()
+    user_info = db.execute("SELECT * FROM users WHERE username = :username",
+                        {"username": username}).fetchone()
     print(user_info)
     is_patient = user_info[4]
     if is_patient:
@@ -90,6 +92,31 @@ def dashboard():
                             {"user_id": user_info[0]}).fetchall()
     print(videos)
     return render_template("dashboard.html", user_info=user_info, videos=videos)
+
+# @app.route("/chat.html")
+# def chat():
+#     return render_template("chat.html")
+
+@app.route("/channels", methods=["POST"])
+def channels():
+    channel = request.form.get("chan")
+    msg[channel] = []
+    if channel not in channels_list:
+        channels_list.append(channel)
+        return jsonify({"error":False, "new_channel":channel})
+    else:
+        return jsonify({"error":True})
+
+@app.route("/populate_channels")
+def populate_channels():
+    return jsonify({"chans": dumps(channels_list)})
+
+# @app.route("/<string:channel_name>.html")
+# def in_channel(channel_name):
+#     print("I am sending you to a channel")
+#     msgs = msg[channel_name]
+#     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
+
 
 def allowed_files(filename):
     return '.' in filename and \
@@ -115,18 +142,22 @@ def upload_video():
             return render_template("upload.html")
 
         if file and allowed_files(file.filename):
-            video_id = db.execute('SELECT * FROM videos ORDER BY id DESC LIMIT 1').fetchone()[0] + 1
+            video_id = db.execute('SELECT * FROM videos ORDER BY id DESC LIMIT 1').fetchone()
+            if video_id is None:
+                video_id = 0
+            else:
+                video_id = video_id[0] + 1
             parent_dir = Path(app.config['UPLOAD_FOLDER']) / f'video{video_id}'
             os.mkdir(parent_dir)
             filename = secure_filename(file.filename)
             save_directory = str(Path(f'video{video_id}') / filename) 
-            file.save(save_directory)
+            file.save(Path(app.config['UPLOAD_FOLDER']) / save_directory)
             # adding video into the database for later
             print(request.form['selected_physician'])
             db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status)" +
                         " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status)",
                         {"patient_id": user_info[0], "filepath_old": save_directory,
-                         "filepath_new": str(Path(f'video{video_id}') / 'high_res' + filename), 
+                         "filepath_new": str(Path(f'video{video_id}') / ('high_res' + filename)), 
                          "physician_id": request.form['selected_physician'],
                          "date": datetime.now().strftime('%Y-%m-%d'), "status": "processing"})
             db.commit()
@@ -147,39 +178,10 @@ def increase_res(filename):
 def view_video(filename):
     return render_template("view_video.html")
 
-@socketio.on("submit message")
-def message(data):
-    print("at submit message")
-    username = data["username"]
-    message = data["message"]
-    timestamp = datetime.now()
-    channel = data["channel"]
-    ts = str(timestamp)
-    msg[channel].append([username, message, timestamp])
-    print(msg)
-    emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
-
-if __name__ == '__main__':
-    app.run()
-
-"""
 @app.route("/chat.html")
 def chat():
     return render_template("chat.html")
 
-@app.route("/channels", methods=["POST"])
-def channels():
-    channel = request.form.get("chan")
-    msg[channel] = []
-    if channel not in channels_list:
-        channels_list.append(channel)
-        return jsonify({"error":False, "new_channel":channel})
-    else:
-        return jsonify({"error":True})
-
-@app.route("/populate_channels")
-def populate_channels():
-    return jsonify({"chans": dumps(channels_list)})
 # @app.route("/channels", methods=["POST"])
 # def channels():
 #     print("in channels")
@@ -215,4 +217,5 @@ def message(data):
     print(msg)
     emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
 
-"""
+if __name__ == '__main__':
+    app.run()
