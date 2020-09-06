@@ -72,6 +72,9 @@ def val_login():
         # return render_template("welcome_user.html")
     return render_template("login.html", error_message="This password is incorrect!")
 
+channels_list = list()
+msg = dict()
+
 @app.route("/dashboard")
 def dashboard():
 
@@ -159,6 +162,31 @@ def increase_res(filename):
 @app.route('/view_video/<filename>')
 def view_video(filename):
     return render_template("view_video.html")
+
+@app.route("/chat.html")
+def chat():
+    return render_template("chat.html")
+
+@app.route("/channels", methods=["POST"])
+def channels():
+    print("in channels")
+    channel = request.form.get("chan")
+    msg[channel] = []
+    if channel not in channels_list:
+        channels_list.append(channel)
+        return jsonify({"error":False, "new_channel":channel})
+    else:
+        return jsonify({"error":True})
+
+@app.route("/populate_channels")
+def populate_channels():
+    return jsonify({"chans": dumps(channels_list)})
+
+@app.route("/<string:channel_name>.html")
+def in_channel(channel_name):
+    print("I am sending you to a channel")
+    msgs = msg[channel_name]
+    return render_template("channel.html", msgs=msgs, channel_name=channel_name)
 
 @socketio.on("submit message")
 def message(data):

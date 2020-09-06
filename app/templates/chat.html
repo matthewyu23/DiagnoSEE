@@ -2,19 +2,9 @@
 
 <html>
     <body>
-        <p id="check_user"></p>
-        <form id="new_user" onsubmit = "createuser(event)">
-            Create an account here: <input id="user" autocomplete="off" placeholder="Username" type="text">
-            <button>Submit</button>
-        </form>
-        <p id="check_channel"></p>
-        <form id="new_channel" onsubmit="createchannel(event)">
-            Create a new channel here: <input id="channel" autocomplete="off" placeholder="channel name" type="text">
-            <button>Submit</button>
-        </form>
-        <ul id="channels_list">Here's a list of your channels: </ul>
 
         <script>
+            /**
             // creates user, stores in localStorage
             if (localStorage.getItem('user')) {
                 uname = localStorage.getItem('user')
@@ -28,10 +18,11 @@
                 } else {
                     window.location.replace = `/`;
                 }
-            }
+            } */
 
             // creates channel from user input, makes sure it doesn't already exist
             function createchannel(event) {
+                console.log("in createchannel");
                 event.preventDefault();
                 const request = new XMLHttpRequest();
                 const new_chan = document.querySelector('#channel').value;
@@ -85,6 +76,7 @@
 
             // makes sure user can see all channels when they first open the page
             document.addEventListener('DOMContentLoaded', function() {
+                console.log('updating chans list');
                 const request_chans = new XMLHttpRequest();
                 request_chans.open('GET', '/populate_channels');
                 request_chans.send();
@@ -108,5 +100,13 @@
             });
 
         </script>
+
+        <p id="check_channel"></p>
+        <form id="new_channel" onsubmit="createchannel(event)">
+            Create a new channel here: <input id="channel" autocomplete="off" placeholder="channel name" type="text">
+            <button>Submit</button>
+        </form>
+        <ul id="channels_list">Here's a list of your channels: </ul>
+        
     </body>
 </html>
