@@ -3,7 +3,7 @@
   <head>
       <title>Dashboard</title>
       <meta charset="utf-8">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.css">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
@@ -30,8 +30,8 @@
             {% else %}
             <th>Patient</th>
             {% endif %}
-            <th>Link</th>
             <th>Status</th>
+            <th>Link</th>
           </tr>
         </thead>
         <tbody>
@@ -45,8 +45,15 @@
              {% else %}
              <td>{{ video[1] }}</td>
              {% endif %}
+
+             {% if video[8] == "processing" %}
+             <td class="table-warning">{{ video[8] }}</td>
+             <td>Not available yet</td>
+             {% else %}
+             <td class="table-success">{{ video[8] }}</td>
              <td><a href={{ video[3] }}>click here</a></td>
-             <td>{{ video[8] }}</td>
+             {% endif %}
+
             </tr>
           {% endfor %}
         </tbody>
@@ -60,45 +67,6 @@
     </div>
     {% endif %}
 
-    <script>
-      localStorage.setItem('username', document.querySelector("#username_hidden").innerHTML);
-      let videos_table = [
-        { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4"},
-        { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4"}
-      ];
-
-      let headers = ["Date", "Video #", "Physician", "Video title", "Link"]
-      //var videos_table = {{videos_array}}
-
-      function generateTableHead(table, data) {
-        let thead = table.createTHead();
-        let row = thead.insertRow();
-        for (let key of data) {
-          let th = document.createElement("th");
-          let text = document.createTextNode(key);
-          th.appendChild(text);
-          row.appendChild(th);
-        }
-      }
-
-      function generateTable(table, data) {
-        for (let element of data) {
-          let row = table.insertRow();
-          for (key in element) {
-            let cell = row.insertCell();
-            if (key == "video_link"){
-              var elLink = document.createElement('a');
-              elLink.href = element[key];
-              elLink.innerHTML = 'link';
-              cell.appendChild(elLink);
-            }
-            else {
-            let text = document.createTextNode(element[key]);
-            cell.appendChild(text);
-            }
-          }
-        }
-      }
     <!-- logout button -->
     <br><br><div class="container">
       <button id="logout" type="button" onclick="location.href='/'">Log out</button>
