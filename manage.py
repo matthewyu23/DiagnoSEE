@@ -5,7 +5,7 @@ https://realpython.com/flask-by-example-part-2-postgres-sqlalchemy-and-alembic/
 import os
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
-from application import app, db
+from app import app, db
 
 
 app.config.from_objects(os.environ['APP_SETTINGS'])
