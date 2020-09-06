@@ -1,5 +1,4 @@
 import os
-import asyncio
 import threading
 from flask import Flask, session, render_template, request, url_for, jsonify, redirect, flash
 from flask_cors import CORS
@@ -107,19 +106,19 @@ def channels():
 def populate_channels():
     return jsonify({"chans": dumps(channels_list)})
 
-@app.route("/<string:channel_name>.html")
-def in_channel(channel_name):
-    print("I am sending you to a channel")
-    msgs = msg[channel_name]
-    return render_template("channel.html", msgs=msgs, channel_name=channel_name)
+# @app.route("/<string:channel_name>.html")
+# def in_channel(channel_name):
+#     print("I am sending you to a channel")
+#     msgs = msg[channel_name]
+#     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
 
 
-async def allowed_files(filename):
+def allowed_files(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 @app.route('/upload', methods=['GET', 'POST'])
-def upload_image():
+def upload_video():
     username = session['username']
     user_info = db.execute("SELECT * FROM users WHERE username = :username",
                         {"username": username}).fetchone() 
@@ -146,9 +145,11 @@ def upload_image():
                          "date": datetime.now().strftime('%Y-%m-%d')})
             process_video = threading.Thread(target=increase_res, 
                                              args=(save_directory,), daemon=True)
-            return redirect("/dashboard") 
+            return redirect(url_for("/dashboard")) 
     else:
-        return render_template("upload.html")
+        all_physicians = db.execute("SELECT user_id FROM users WHERE is_patient = :physician",
+                                    {"physician": False}).fetchall()
+        return render_template("upload.html", physicians=all_physicians)
 
 
 def increase_res(filename):

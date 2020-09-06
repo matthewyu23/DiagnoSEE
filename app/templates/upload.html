@@ -14,6 +14,12 @@
       <h1>Upload Video</h1>
       <form method=post enctype=multipart/form-data>
         <input type=file name=file>
+        <label for="selected_physician">Select your physician:</label><br>
+        <select id="selected_physician">
+          {% for physician in physicians %}
+            <option value={{all_physicians}}>Physician #{{physician[0]}}</option>
+          {% endfor %}
+        </select><br><br>
         <input type=submit value=Upload>
       </form>
       <div class="container">
