@@ -21,7 +21,7 @@ import os
 import shutil
 import subprocess
 
-folder = "media/"
+folder = "app/media/"
 
 def create_dir(path):
     if not os.path.exists(path):

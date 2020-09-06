@@ -31,7 +31,7 @@
           <!-- embed video with default controls + Download option-->
           <label>Original video</label>&nbsp<a href="" download>(Download)</a><br>
           <video id="video_old" width="100%" controls>
-            <source src="../media/{{ filename }}" type="video/mp4">
+            <source src="{{ url_for('uploaded_file', directory=directory, filename=filename_old) }}" type="video/mp4">
             Your browser does not support HTML video.
           </video><br>
           <!-- display current time in the video -->
@@ -50,7 +50,7 @@
           <!-- embed video with default controls + Download option-->
           <label>High-resolution video</label>&nbsp<a href="" download>(Download)</a><br>
           <video id="video_new" width="100%" controls>
-            <source src=" {{ filename }} " type="video/mp4">
+            <source src="{{ url_for('uploaded_file', directory=directory, filename=filename) }}" type="video/mp4">
             Your browser does not support HTML video.
           </video><br>
           <!-- display current time in the video -->
@@ -70,12 +70,6 @@
       <form id="notes" method="POST">
         <br><label for="notes_text">Enter any notes (e.g. if you want to elaborate on a particular frame):</label><br>
         <textarea id="notes_text" cols="50" rows="10"></textarea><br>
-        <label for="selected_physician">Select your physician:</label><br>
-        <select id="selected_physician">
-          {% for physician in physicians %}
-            <option value={{physician}}>{{physician}}</option>
-          {% endfor %}
-        </select><br><br>
         <input type="submit" value="Submit videos to my physician">
       </form>
 

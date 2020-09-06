@@ -239,12 +239,12 @@ table.dataTable {
   table.dataTable tbody th.dt-body-nowrap,
   table.dataTable tbody td.dt-body-nowrap {
     white-space: nowrap; }
- 
+
 table.dataTable,
 table.dataTable th,
 table.dataTable td {
   box-sizing: content-box; }
- 
+
 /*
  * Control feature layout
  */
@@ -386,7 +386,7 @@ table.dataTable td {
     content: "";
     clear: both;
     height: 0; }
- 
+
 @media screen and (max-width: 767px) {
   .dataTables_wrapper .dataTables_info,
   .dataTables_wrapper .dataTables_paginate {
@@ -443,7 +443,7 @@ table.dataTable td {
              <td>Not available yet</td>
              {% else %}
              <td class="table-success">{{ video[8] }}</td>
-             <td><a href={{ video[3] }}>click here</a></td>
+             <td><a href={{ url_for('view_video', directory=video[3].split('/')[0], filename=video[3].split('/')[1])  }}>click here</a></td>
              {% endif %}
 
             </tr>
