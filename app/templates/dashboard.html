@@ -17,13 +17,13 @@
       </table>
     </div>
     <div class="container">
-      <h1><a href="upload.html">Upload a new video</a></h1>
+      <h1><a href={{ url_for('upload_video') }}>Upload a new video</a></h1>
       <table>
         {% for video in videos %}
-          <th>{{ video.date }}</th>
-          <th>{{ video.id }}</th>
-          <th>{{ video.title }}</th>
-          <th>{{ video.filepath_new }}</th>
+          <th>{{ video[6] }}</th>
+          <th>{{ video[0] }}</th>
+          <th>{{ video[7] }}</th>
+          <th>{{ video[4] }}</th>
         {% endfor %}
       </table>
     </div>
