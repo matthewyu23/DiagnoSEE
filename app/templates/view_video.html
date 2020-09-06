@@ -9,6 +9,32 @@
       <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
   </head>
   <body>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+        socket.on('connect', function() {
+          document.querySelector('#message').onsubmit = function(event) {
+            event.preventDefault();
+            var chan_name = document.querySelector('#video_title_hidden').innerHTML; // THIS NEEDS TO BE RELATED TO SOMETHING FROM THE VIDEOS DB -- can keep the name "chan_name" for the vairable, but change other stuff
+            localStorage.setItem('channel', chan_name);
+            console.log('creating message');
+            const message = document.querySelector('#new_message').value;
+            const username = localStorage.getItem('username');
+            const channel = localStorage.getItem('channel');
+            console.log('sending to server side');
+            socket.emit('submit message', {'channel': channel, 'username': username, 'message': message});
+          }
+        });
+
+        socket.on('announce message', function(data) {
+          console.log('at annouce message');
+          const p = document.createElement('p');
+          p.innerHTML = `${data.username}: ${data.message} ${data.timestamp}`;
+          document.querySelector('#messages').append(p);
+          console.log("SOCKET IO WORKKSSSSSIUFERIUIRUEHIURG");
+        });
+    });
+    </script>
     <p id="video_title_hidden" hidden>{{video_title}}</p>
     <div class="container" style="text-align:center">
       <h1>View Video</h1>
@@ -31,7 +57,7 @@
           <!-- embed video with default controls + Download option-->
           <label>Original video</label>&nbsp<a href="" download>(Download)</a><br>
           <video id="video_old" width="100%" controls>
-            <source src="../media/{{ filename }}" type="video/mp4">
+            <source src="../media/  {{ filename }}" type="video/mp4">
             Your browser does not support HTML video.
           </video><br>
           <!-- display current time in the video -->
@@ -66,30 +92,19 @@
         </div>
       </div>
 
-      <!-- add notes & select physician -->
-      <form id="notes" method="POST">
-        <br><label for="notes_text">Enter any notes (e.g. if you want to elaborate on a particular frame):</label><br>
-        <textarea id="notes_text" cols="50" rows="10"></textarea><br>
-        <label for="selected_physician">Select your physician:</label><br>
-        <select id="selected_physician">
-          {% for physician in physicians %}
-            <option value={{physician}}>{{physician}}</option>
-          {% endfor %}
-        </select><br><br>
-        <input type="submit" value="Submit videos to my physician">
-      </form>
-
     </div>
 
-    <div id = "messages">
-      {% for message in msgs %}
-          <p>{{message[0]}}: {{message[1]}} {{message[2]}}</p>
-      {% endfor %}
-    </div>
     <form id="message">
         <input id="new_message" autocomplete="off" placeholder="Text Message" type="text">
         <button>Submit</button>
     </form>
+    <div id = "messages">
+      {% if msgs %}
+      {% for message in msgs %}
+          <p>{{message[0]}}: {{message[1]}} {{message[2]}}</p>
+      {% endfor %}
+      {% endif %}
+    </div>
 
     <script>
       // display current video time
@@ -162,31 +177,6 @@
           });
           ev.preventDefault();
       });
-
-      document.addEventListener('DOMContentLoaded', function() {
-        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
-        socket.on('connect', function() {
-          document.querySelector('#message').onsubmit = function(event) {
-            event.preventDefault();
-            var chan_name = document.querySelector('#video_title_hidden').innerHTML; // THIS NEEDS TO BE RELATED TO SOMETHING FROM THE VIDEOS DB -- can keep the name "chan_name" for the vairable, but change other stuff
-            localStorage.setItem('channel', chan_name);
-            console.log('creating message');
-            const message = document.querySelector('#new_message').value;
-            const username = localStorage.getItem('username');
-            const channel = localStorage.getItem('channel');
-            console.log('sending to server side');
-            socket.emit('submit message', {'channel': channel, 'username': username, 'message': message});
-          }
-        });
-
-        socket.on('announce message', function(data) {
-          console.log('at annouce message');
-          const p = document.createElement('p');
-          p.innerHTML = `${data.username}: ${data.message} ${data.timestamp}`;
-          document.querySelector('#messages').append(p);
-          console.log("SOCKET IO WORKKSSSSSIUFERIUIRUEHIURG");
-        });
-    });
     </script>
 
   </body>

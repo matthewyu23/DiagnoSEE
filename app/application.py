@@ -77,9 +77,6 @@ def val_login():
         # return render_template("welcome_user.html")
     return render_template("login.html", error_message="This password is incorrect!")
 
-channels_list = list()
-msg = dict()
-
 @app.route("/dashboard")
 def dashboard():
 
@@ -180,12 +177,34 @@ def gan_test():
     process.daemon = True
     process.start()
 
+msg = dict()
+
 @app.route('/view_video/<string:directory>/<string:filename>')
 def view_video(directory, filename):
     video_title = db.execute("SELECT name FROM videos WHERE filepath_new = :new_filename", 
                             {"new_filename":str(Path(directory) / filename)}).fetchone()
+    print(type(video_title))
+    vid_title = video_title[0]
+    print(type(vid_title))
+    if vid_title not in msg.keys():
+        msg[vid_title] = []
+        msgs = None
+    else:
+        msgs = msg[vid_title]
     return render_template("view_video.html", filename=str(Path(directory) / filename), 
-                            video_title=video_title)
+                            video_title=vid_title, msgs=msgs)
+
+@socketio.on("submit message")
+def message(data):
+    print("at submit message")
+    username = data["username"]
+    message = data["message"]
+    timestamp = datetime.now()
+    channel = data["channel"]
+    ts = str(timestamp)
+    msg[channel] = []
+    msg[channel].append([username, message, ts])
+    emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
 
 # @app.route("/channels", methods=["POST"])
 # def channels():
@@ -207,20 +226,6 @@ def view_video(directory, filename):
 #     print("I am sending you to a channel")
 #     msgs = msg[channel_name]
 #     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
-
-@socketio.on("submit message")
-def message(data):
-    print("at submit message")
-    username = data["username"]
-    message = data["message"]
-    timestamp = datetime.now()
-    channel = data["channel"]
-    ts = str(timestamp)
-    msg[channel].append([username, message, timestamp])
-    if len(msg[channel]) == 101:
-        msg[channel].pop(0)
-    print(msg)
-    emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
 
 if __name__ == '__main__':
     app.run()
