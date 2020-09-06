@@ -15,11 +15,13 @@ from datetime import datetime
 from pathlib import Path
 from gan.upscale import gan
 
+from flask import send_from_directory
 
 from gan import gan
 
 # sets up environment and db
 app = Flask(__name__)
+
 # Check for environment variable
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
@@ -33,6 +35,7 @@ socketio = SocketIO(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['ALLOWED_EXTENSIONS'] = ['mp4', 'mov']
 app.config['UPLOAD_FOLDER'] = 'media/'
+app.config['UPLOAD_FOLDER2'] = 'app/media/'
 
 # Set up database
 engine = create_engine(os.getenv("DATABASE_URL"), max_overflow=20)
@@ -92,7 +95,7 @@ def dashboard():
                             {"user_id": user_info[0]}).fetchall()
     print(videos)
     return render_template("dashboard.html", user_info=user_info, videos=videos, username=username)
-    
+
 
 def allowed_files(filename):
     return '.' in filename and \
@@ -136,12 +139,12 @@ def upload_video():
             else:
                 video_id = video_id[0] + 1
             hash_string = session['username'] + str(video_id) + datetime.now().strftime('%Y-%m-%d')
-            hashed = hashlib.sha1(bytes(hash_string, 'utf-8')).hexdigest() 
-            parent_dir = Path(app.config['UPLOAD_FOLDER']) / hashed 
+            hashed = hashlib.sha1(bytes(hash_string, 'utf-8')).hexdigest()
+            parent_dir = Path(app.config['UPLOAD_FOLDER2']) / hashed
             os.mkdir(parent_dir)
             filename = secure_filename(file.filename)
             save_directory = str(Path(hashed) / filename)
-            file.save(Path(app.config['UPLOAD_FOLDER']) / save_directory)
+            file.save(Path(app.config['UPLOAD_FOLDER2']) / save_directory)
             # adding video into the database for later
             print(request.form['selected_physician'])
             db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status, name)" +
@@ -154,7 +157,7 @@ def upload_video():
             db.commit()
             # increase_res(str(Path(app.config['UPLOAD_FOLDER']) / save_directory), f'video{video_id}', 'high_res' + filename, video_id)
             process_video = threading.Thread(target=increase_res,
-                                             args=(str(Path(app.config['UPLOAD_FOLDER']) / save_directory), hashed, 'high_res_' + filename, video_id), daemon=True)
+                                             args=(str(Path(app.config['UPLOAD_FOLDER2']) / save_directory), hashed, 'high_res_' + filename, video_id), daemon=True)
             process_video.start()
             return redirect(url_for("dashboard"))
     else:
@@ -181,7 +184,7 @@ msg = dict()
 
 @app.route('/view_video/<string:directory>/<string:filename>')
 def view_video(directory, filename):
-    video_title = db.execute("SELECT name FROM videos WHERE filepath_new = :new_filename", 
+    video_title = db.execute("SELECT name FROM videos WHERE filepath_new = :new_filename",
                             {"new_filename":str(Path(directory) / filename)}).fetchone()
     print(type(video_title))
     vid_title = video_title[0]
@@ -205,6 +208,14 @@ def message(data):
     msg[channel] = []
     msg[channel].append([username, message, ts])
     emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
+    print("directory:", directory)
+    print("filename:", filename)
+    return render_template("view_video.html", filename=filename, filename_old=filename[9:],
+    directory=directory, video_title=video_title)
+
+@app.route('/uploads/<string:directory>/<string:filename>')
+def uploaded_file(directory, filename):
+    return send_from_directory(app.config["UPLOAD_FOLDER"], str(Path(directory) / filename))
 
 # @app.route("/channels", methods=["POST"])
 # def channels():
