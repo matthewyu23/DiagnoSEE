@@ -70,53 +70,27 @@ def val_login():
     pword = ((db.execute("SELECT password FROM users WHERE username = :username", {"username":uname}).fetchall())[0])[0]
     if password == pword:
         session["username"] = uname
-        return redirect(url_for("dashboard", _external=True))
+        return redirect(url_for("dashboard", _external=True), username=uname)
         # return render_template("welcome_user.html")
     return render_template("login.html", error_message="This password is incorrect!")
 
-channels_list = list()
 msg = dict()
 
 @app.route("/dashboard")
 def dashboard():
 
     username = session["username"]
-    user_info = db.execute("SELECT * FROM users WHERE username = :username",
-                        {"username": username}).fetchone()
+    user_info = db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).fetchone()
     print(user_info)
-    is_patient = user_info['is_patient']
+    is_patient = user_info[4]
     if is_patient:
         videos = db.execute("SELECT * FROM videos WHERE patient_id = :user_id",
-                            {"user_id": user_info['user_id']}).fetchall()
+                            {"user_id": user_info[0]}).fetchall()
     else:
         videos = db.execute("SELECT * FROM videos WHERE physician_id = :user_id",
-                            {"user_id": user_info['user_id']}).fetchall()
+                            {"user_id": user_info[0]}).fetchall()
+    print(videos)
     return render_template("dashboard.html", user_info=user_info, videos=videos)
-
-@app.route("/chat.html")
-def chat():
-    return render_template("chat.html")
-
-@app.route("/channels", methods=["POST"])
-def channels():
-    channel = request.form.get("chan")
-    msg[channel] = []
-    if channel not in channels_list:
-        channels_list.append(channel)
-        return jsonify({"error":False, "new_channel":channel})
-    else:
-        return jsonify({"error":True})
-
-@app.route("/populate_channels")
-def populate_channels():
-    return jsonify({"chans": dumps(channels_list)})
-
-# @app.route("/<string:channel_name>.html")
-# def in_channel(channel_name):
-#     print("I am sending you to a channel")
-#     msgs = msg[channel_name]
-#     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
-
 
 def allowed_files(filename):
     return '.' in filename and \
@@ -132,25 +106,30 @@ def upload_video():
             flash('No file part.')
             return redirect(request.url)
         file = request.files['file']
+
         if file.filename == '':
             flash('No selected file')
             return redirect(request.url)
+
         if not allowed_files(file.filename):
             flash('File type not supported! Please upload a file with extension ' + ','.join(app.config['ALLOWED_EXTENSIONS']))
             return render_template("upload.html")
+
         if file and allowed_files(file.filename):
             filename = secure_filename(file.filename)
             save_directory = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(save_directory)
             # adding video into the database for later
-            db.execute("INSERT INTO videos (patient_id, filepath_old, physician_id, date)" +
-                        " VALUES (:patient_id, :filepath_old, :physician_id, :date)",
+            print(request.form['selected_physician'])
+            db.execute("INSERT INTO videos (patient_id, filepath_old, filepath_new, physician_id, date, status)" +
+                        " VALUES (:patient_id, :filepath_old, :filepath_new, :physician_id, :date, :status)",
                         {"patient_id": user_info[0], "filepath_old": save_directory,
-                         "physician_id": request.args['physician_id'],
-                         "date": datetime.now().strftime('%Y-%m-%d')})
-            process_video = threading.Thread(target=increase_res,
-                                             args=(save_directory,), daemon=True)
-            return redirect(url_for("/dashboard"))
+                         "filepath_new": 'high_res_' + save_directory, "physician_id": request.form['selected_physician'],
+                         "date": datetime.now().strftime('%Y-%m-%d'), "status": "processing"})
+            db.commit()
+            #process_video = threading.Thread(target=increase_res,
+            #                                 args=(save_directory,), daemon=True)
+            return redirect(url_for("dashboard"))
     else:
         all_physicians = db.execute("SELECT user_id FROM users WHERE is_patient = :physician",
                                     {"physician": False}).fetchall()
@@ -172,10 +151,39 @@ def gan_test():
 def view_video(filename):
     return render_template("view_video.html")
 
-# @app.route("/chat.html")
-# def chat():
-#     return render_template("chat.html")
+@socketio.on("submit message")
+def message(data):
+    print("at submit message")
+    username = data["username"]
+    message = data["message"]
+    timestamp = datetime.now()
+    channel = data["channel"]
+    ts = str(timestamp)
+    msg[channel].append([username, message, timestamp])
+    print(msg)
+    emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
 
+if __name__ == '__main__':
+    app.run()
+
+"""
+@app.route("/chat.html")
+def chat():
+    return render_template("chat.html")
+
+@app.route("/channels", methods=["POST"])
+def channels():
+    channel = request.form.get("chan")
+    msg[channel] = []
+    if channel not in channels_list:
+        channels_list.append(channel)
+        return jsonify({"error":False, "new_channel":channel})
+    else:
+        return jsonify({"error":True})
+
+@app.route("/populate_channels")
+def populate_channels():
+    return jsonify({"chans": dumps(channels_list)})
 # @app.route("/channels", methods=["POST"])
 # def channels():
 #     print("in channels")
@@ -197,19 +205,18 @@ def view_video(filename):
 #     msgs = msg[channel_name]
 #     return render_template("channel.html", msgs=msgs, channel_name=channel_name)
 
-# @socketio.on("submit message")
-# def message(data):
-#     print("at submit message")
-#     username = data["username"]
-#     message = data["message"]
-#     timestamp = datetime.now()
-#     channel = data["channel"]
-#     ts = str(timestamp)
-#     msg[channel].append([username, message, timestamp])
-#     if len(msg[channel]) == 101:
-#         msg[channel].pop(0)
-#     print(msg)
-#     emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
+@socketio.on("submit message")
+def message(data):
+    print("at submit message")
+    username = data["username"]
+    message = data["message"]
+    timestamp = datetime.now()
+    channel = data["channel"]
+    ts = str(timestamp)
+    msg[channel].append([username, message, timestamp])
+    if len(msg[channel]) == 101:
+        msg[channel].pop(0)
+    print(msg)
+    emit('announce message', {'channel': channel, 'username': username, 'message': message, 'timestamp': ts}, broadcast=True)
 
-if __name__ == '__main__':
-    app.run()
+"""

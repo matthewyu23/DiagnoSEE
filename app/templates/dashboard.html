@@ -3,79 +3,77 @@
   <head>
       <title>Dashboard</title>
       <meta charset="utf-8">
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.css">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.10.1/bootstrap-table.min.js"></script>
+      <script type="text/javascript" language="javascript" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
   </head>
   <body>
+    <h1 id="username_hidden" hidden>{{username}}!!</h1>
     <div class="container">
-      <h1>Uploaded Videos</h1>
-      <table id="table" class="">
-      <!-- table data! -->
-      </table>
+      <h1>Dashboard</h1>
     </div>
 
     <div class="container">
-      <table>
-        {% for video in videos %}
-          <th>{{ video[6] }}</th>
-          <th>{{ video[0] }}</th>
-          <th>{{ video[7] }}</th>
-          <th>{{ video[4] }}</th>
-        {% endfor %}
+      <h2>Uploaded Videos</h2>
+      <table id="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>No.</th>
+            <th>Title</th>
+            {% if user_info[4] %}
+            <th>Physician</th>
+            {% else %}
+            <th>Patient</th>
+            {% endif %}
+            <th>Status</th>
+            <th>Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for video in videos %}
+            <tr>
+             <td>{{ video[6].strftime('%m/%d/%Y') }}</td>
+             <td>#{{ video[0] }}</td>
+             <td>{{ video[7] }}</td>
+             {% if user_info[4] %}
+             <td>{{ video[5] }}</td>
+             {% else %}
+             <td>{{ video[1] }}</td>
+             {% endif %}
+
+             {% if video[8] == "processing" %}
+             <td class="table-warning">{{ video[8] }}</td>
+             <td>Not available yet</td>
+             {% else %}
+             <td class="table-success">{{ video[8] }}</td>
+             <td><a href={{ video[3] }}>click here</a></td>
+             {% endif %}
+
+            </tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
 
+    <!-- if user is patient, show link to upload video -->
     {% if user_info[4]%}
     <div class="container">
-      <h1><a href={{ url_for('upload_video') }}>Upload a new video</a></h1>
+      <h3><a href={{ url_for('upload_video') }}>Upload a new video</a></h3>
     </div>
     {% endif %}
 
+    <!-- logout button -->
+    <br><br><div class="container">
+      <button id="logout" type="button" onclick="location.href='/'">Log out</button>
+    </div>
+
     <script>
-      let videos_table = [
-        { date: "09/05/2020", video_no: "#1", physician: "Dr. X", video_name: "skin rash", video_link: "sample_video.mp4"},
-        { date: "09/08/2020", video_no: "#1", physician: "Dr. Y", video_name: "ulcer", video_link: "sample_video.mp4"}
-      ];
-
-      let headers = ["Date", "Video #", "Physician", "Video title", "Link"]
-      //var videos_table = {{videos_array}}
-
-      function generateTableHead(table, data) {
-        let thead = table.createTHead();
-        let row = thead.insertRow();
-        for (let key of data) {
-          let th = document.createElement("th");
-          let text = document.createTextNode(key);
-          th.appendChild(text);
-          row.appendChild(th);
-        }
-      }
-
-      function generateTable(table, data) {
-        for (let element of data) {
-          let row = table.insertRow();
-          for (key in element) {
-            let cell = row.insertCell();
-            if (key == "video_link"){
-              var elLink = document.createElement('a');
-              elLink.href = element[key];
-              elLink.innerHTML = 'link';
-              cell.appendChild(elLink);
-            }
-            else{
-            let text = document.createTextNode(element[key]);
-            cell.appendChild(text);
-          }
-          }
-        }
-      }
-
-      let table = document.querySelector("table");
-      generateTable(table, videos_table);
-      generateTableHead(table, headers);
+      $(document).ready(function () { $('#table').DataTable(); });
     </script>
 
   </body>

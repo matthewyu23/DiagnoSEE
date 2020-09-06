@@ -15,9 +15,9 @@
       <form method=post enctype=multipart/form-data>
         <input type=file name=file>
         <label for="selected_physician">Select your physician:</label><br>
-        <select id="selected_physician">
+        <select id="selected_physician" name="selected_physician">
           {% for physician in physicians %}
-            <option value={{all_physicians}}>Physician #{{physician[0]}}</option>
+            <option value={{physician[0]}}>Physician #{{physician[0]}}</option>
           {% endfor %}
         </select><br><br>
         <input type=submit value=Upload>
